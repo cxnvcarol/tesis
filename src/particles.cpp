@@ -131,28 +131,23 @@ extern "C" void cudaGLInit(int argc, char **argv);
 extern "C" void copyArrayFromDevice(void *host, const void *device,
 		unsigned int vbo, int size);
 
-// initialize particle system
-void initParticleSystem(int numParticles, uint3 gridSize, bool bUseOpenGL) {
-	psystem = new ParticleSystem(numParticles, gridSize, bUseOpenGL);
-	psystem->setFileSource(DATAFILE_PATH);
-	psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
-	//psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
-	//psystem->reset(ParticleSystem::CONFIG_RANDOM);
-
-	if (bUseOpenGL) {
-		renderer = new ParticleRenderer;
-		renderer->setParticleRadius(psystem->getParticleRadius());
-		renderer->setColorBuffer(psystem->getColorBuffer());
-	}
-
-	sdkCreateTimer(&timer);
-}
 
 void initSimulationSystem(uint3 gridSize, bool bUseOpenGL, string filePath) {
 	//psystem=new ParticleSystem(0,gridSize,bUseOpenGL);
 	psystem = new ParticleSystem(1, gridSize, bUseOpenGL);
 
-	psystem->setFileSource(filePath);
+
+	if(filePath.empty())
+		psystem->setFileSource(DATAFILE_PATH);
+	else{
+		try{
+			psystem->setFileSource(filePath);
+		}
+		catch(int ex)
+		{
+			psystem->setFileSource(DATAFILE_PATH);
+		}
+	}
 	psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
 
 	if (bUseOpenGL) {
@@ -203,45 +198,6 @@ void initGL(int *argc, char **argv) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glutReportErrors();
-}
-
-void runBenchmark(int iterations, char *exec_path) {
-	printf("Run %u particles simulation for %d iterations...\n\n", numParticles,
-			iterations);
-	cudaDeviceSynchronize();
-	sdkStartTimer(&timer);
-
-	for (int i = 0; i < iterations; ++i) {
-		psystem->update(timestep);
-	}
-
-	cudaDeviceSynchronize();
-	sdkStopTimer(&timer);
-	float fAvgSeconds = ((float) 1.0e-3 * (float) sdkGetTimerValue(&timer)
-			/ (float) iterations);
-
-	printf(
-			"particles, Throughput = %.4f KParticles/s, Time = %.5f s, Size = %u particles, NumDevsUsed = %u, Workgroup = %u\n",
-			(1.0e-3 * numParticles) / fAvgSeconds, fAvgSeconds, numParticles, 1,
-			0);
-
-	if (g_refFile) {
-		printf("\nChecking result...\n\n");
-		float *hPos = (float *) malloc(
-				sizeof(float) * 4 * psystem->getNumParticles());
-		copyArrayFromDevice(hPos, psystem->getCudaPosVBO(), 0,
-				sizeof(float) * 4 * psystem->getNumParticles());
-
-		sdkDumpBin((void *) hPos,
-				sizeof(float) * 4 * psystem->getNumParticles(),
-				"particles.bin");
-
-		if (!sdkCompareBin2BinFloat("particles.bin", g_refFile,
-				sizeof(float) * 4 * psystem->getNumParticles(),
-				MAX_EPSILON_ERROR, THRESHOLD, exec_path)) {
-			g_TotalErrors++;
-		}
-	}
 }
 
 void computeFPS() {
@@ -560,12 +516,14 @@ void motion(int x, int y) {
 		}
 		else if(buttonState==3)//ctrl
 		{
+			//escala la caja de seleccion
 			float v[3], r[3];
 			v[0] = dx * translateSpeed;
 			v[1] = -dy * translateSpeed;
 			v[2] = 0.0f;
 			ixform(v, r, modelView);
 
+			//TODO no tiene en cuenta la direccion del arrastre con respecto a la posicion de la caja. De espaldas escala diferente a atras en perspectiva
 			float3 tamSel=psystem->getSelectSize();
 			tamSel.x+=r[0];
 			if(tamSel.x<0.01)tamSel.x=0.01;
@@ -830,6 +788,8 @@ int main(int argc, char **argv) {
 	numIterations = 0;
 
 	if (argc > 1) {
+		printf("arguments!!");
+
 		if (checkCmdLineFlag(argc, (const char **) argv, "grid")) {
 			gridDim = getCmdLineArgumentInt(argc, (const char **) argv, "grid");
 		}
@@ -840,6 +800,10 @@ int main(int argc, char **argv) {
 			fpsLimit = frameCheckNumber;
 			numIterations = 1;
 		}
+	}
+	else if(argc>0)
+	{
+		printf("1 argument!!");
 	}
 
 	gridSize.x = gridSize.y = gridSize.z = gridDim;
@@ -869,34 +833,36 @@ int main(int argc, char **argv) {
 		initGL(&argc, argv);
 		cudaGLInit(argc, argv);
 	}
+	if (checkCmdLineFlag(argc, (const char **) argv, "data")) {
+		char* pth;
+		getCmdLineArgumentString(argc, (const char **) argv, "data",&pth);
+		fflush(stdout);
 
-	//initParticleSystem(numParticles, gridSize, g_refFile==NULL);
-	initSimulationSystem(gridSize, true, DATAFILE_PATH);
+		printf("datafile: %s\n",pth);
+		fflush(stdout);
+		cin.get();
+		initSimulationSystem(gridSize, true, pth);
+	}
+	else
+		initSimulationSystem(gridSize, true, DATAFILE_PATH);
 	initParams();
 
 	if (!g_refFile) {
 		initMenus();
 	}
 
-	if (benchmark || g_refFile) {
-		if (numIterations <= 0) {
-			numIterations = 300;
-		}
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
+	glutMouseFunc(mouse);
+	glutMotionFunc(motion);
+	glutKeyboardFunc(key);
+	glutSpecialFunc(special);
+	glutIdleFunc(idle);
 
-		runBenchmark(numIterations, argv[0]);
-	} else {
-		glutDisplayFunc(display);
-		glutReshapeFunc(reshape);
-		glutMouseFunc(mouse);
-		glutMotionFunc(motion);
-		glutKeyboardFunc(key);
-		glutSpecialFunc(special);
-		glutIdleFunc(idle);
+	glutCloseFunc(cleanup);
 
-		glutCloseFunc(cleanup);
+	glutMainLoop();
 
-		glutMainLoop();
-	}
 
 	if (psystem) {
 		delete psystem;

@@ -510,7 +510,7 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	getline(data, line);    //skip first row
 	std::cout << line << "\n";
 	while (std::getline(data, line)) {
-		if (tam < 15)
+		if (tam < 2)
 			std::cout << line << "\n";
 
 		std::stringstream lineStream(line);
