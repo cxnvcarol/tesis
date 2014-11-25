@@ -29,8 +29,7 @@
 								<option id="nvcc.compiler.pic.676854498" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.machine.1670667747" name="Architecture (--machine)" superClass="nvcc.compiler.machine" value="nvcc.compiler.machine64" valueType="enumerated"/>
 								<option id="nvcc.compiler.include.paths.2022731740" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/particles}/5_Simulations&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/particles}/common/inc&quot;"/>
+																	<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/particles}/common/inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/particles}&quot;"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1274945927" superClass="nvcc.compiler.input.cu"/>

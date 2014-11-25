@@ -65,7 +65,7 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize,
 	m_params.colliderPos = make_float3(-1.2f, -0.8f, 0.8f);
 	m_params.colliderRadius = 0.2f;
 
-	m_params.selectSize =make_float3(0.5f,0.2f,0.4f);
+	m_params.selectSize =make_float3(0.4f,0.4f,0.4f);
 
 	m_params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
 	//    m_params.cellSize = make_float3(worldSize.x / m_gridSize.x, worldSize.y / m_gridSize.y, worldSize.z / m_gridSize.z);
