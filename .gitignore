@@ -26,3 +26,8 @@
 *.exe
 *.out
 *.app
+
+data/*
+Debug/*
+*.dat
+*~
