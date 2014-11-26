@@ -1,6 +1,6 @@
 reset
 set datafile separator ","
-width=3
+width=24000
 set boxwidth  width*0.9
 set style fill solid 0.5
 set xlabel "x"

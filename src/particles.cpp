@@ -149,69 +149,69 @@ void colorConfig(string configFilePath)
 		while (std::getline(data, line)) {
 
 			std::istringstream is_line(line);
-			  std::string key;
-			  if( std::getline(is_line, key, '=') )
-			  {
-			    std::string value;
-			    if( std::getline(is_line, value) )
-			      {
-			    	std::cout<<key<<"::"<< value<<"\n";
+			std::string key;
+			if( std::getline(is_line, key, '=') )
+			{
+				std::string value;
+				if( std::getline(is_line, value) )
+				{
+					std::cout<<key<<"::"<< value<<"\n";
 
-			      }
-			    if(key.find("colormode")!=-1)
-			    {
+				}
+				if(key.find("colormode")!=-1)
+				{
 
-			    	//posX = (float) ::atof(cell.c_str());
-			    	if(value.find("gradient")!=-1)
-			    	{
-			    		printf("gradient!!!");
-			    		psystem->setColorRangeMode(psystem->COLOR_GRADIENT);
-			    	}
-			    	else if(value.find("short_rainbow")!=-1)
-			    	{
-			    		psystem->setColorRangeMode(psystem->COLOR_SHORT_RAINBOW);
-			    	}
-			    	else if(value.find("full_rainbow")!=-1)
-			    	{
-			    		psystem->setColorRangeMode(psystem->COLOR_FULL_RAINBOW);
-			    	}
-			    	//TODO parse to float values and set psystem->...
-			    }
-			    else if(key.find("color")!=-1)
-			    {
-			    	//TODO generalize to include n colors & generate gradient according to that!
-			    	if(key.find("color1")!=-1)
-			    	{
-			    		const char* str=value.c_str();
-			    		char *token, *strpos = const_cast<char*>(str);;
+					//posX = (float) ::atof(cell.c_str());
+					if(value.find("gradient")!=-1)
+					{
+						printf("gradient!!!");
+						psystem->setColorRangeMode(psystem->COLOR_GRADIENT);
+					}
+					else if(value.find("short_rainbow")!=-1)
+					{
+						psystem->setColorRangeMode(psystem->COLOR_SHORT_RAINBOW);
+					}
+					else if(value.find("full_rainbow")!=-1)
+					{
+						psystem->setColorRangeMode(psystem->COLOR_FULL_RAINBOW);
+					}
+					//TODO parse to float values and set psystem->...
+				}
+				else if(key.find("color")!=-1)
+				{
+					//TODO generalize to include n colors & generate gradient according to that!
+					if(key.find("color1")!=-1)
+					{
+						const char* str=value.c_str();
+						char *token, *strpos = const_cast<char*>(str);;
 
-			    		float *newcolor=(float*)calloc(3,sizeof(float));
-			    		for (int var = 0; var < 3; ++var) {
-			    			token=strsep(&strpos,",");
-			    			newcolor[var]=(float) ::atof(token);
+						float *newcolor=(float*)calloc(3,sizeof(float));
+						for (int var = 0; var < 3; ++var) {
+							token=strsep(&strpos,",");
+							newcolor[var]=(float) ::atof(token);
 
 						}
-			    		psystem->setColorInitialGradient(newcolor);
-			    		printf("\nnc: %f,%f,%f\n",newcolor[0],newcolor[1],newcolor[2]);
-			    	}
+						psystem->setColorInitialGradient(newcolor);
+						printf("\nnc: %f,%f,%f\n",newcolor[0],newcolor[1],newcolor[2]);
+					}
 
-			    	else if(key.find("color2")!=-1)
-			    				    	{
-			    		printf("color2!!");
+					else if(key.find("color2")!=-1)
+					{
+						printf("color2!!");
 
-			    				    		const char* str=value.c_str();
-			    				    		char *token, *strpos = const_cast<char*>(str);;
+						const char* str=value.c_str();
+						char *token, *strpos = const_cast<char*>(str);;
 
-			    				    		float *newcolor=(float*)calloc(3,sizeof(float));
-			    				    		for (int var = 0; var < 3; ++var) {
-			    				    			token=strsep(&strpos,",");
-			    				    			newcolor[var]=(float) ::atof(token);
+						float *newcolor=(float*)calloc(3,sizeof(float));
+						for (int var = 0; var < 3; ++var) {
+							token=strsep(&strpos,",");
+							newcolor[var]=(float) ::atof(token);
 
-			    							}
-			    				    		psystem->setColorFinalGradient(newcolor);
-			    				    	}
-			    }
-			  }
+						}
+						psystem->setColorFinalGradient(newcolor);
+					}
+				}
+			}
 
 			nlines++;
 		}
@@ -255,7 +255,7 @@ void cleanup() {
 void initGL(int *argc, char **argv) {
 	glutInit(argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-//	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+	//	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("Simulation");
 	glewInit();
@@ -312,32 +312,32 @@ void glArrayBox(float w,float h,float d)
 
 
 	glBegin(GL_LINES);
-		glVertex3f( -w/2, -h/2,  d/2 );
-		glVertex3f( -w/2,  h/2,  d/2 );
-		glVertex3f( -w/2,  h/2,  d/2 );
-		glVertex3f( -w/2,  h/2, -d/2 );
-		glVertex3f( -w/2,  h/2, -d/2 );
-		glVertex3f( -w/2, -h/2, -d/2 );
-		glVertex3f( -w/2, -h/2, -d/2 );
-		glVertex3f( -w/2, -h/2,  d/2 );
+	glVertex3f( -w/2, -h/2,  d/2 );
+	glVertex3f( -w/2,  h/2,  d/2 );
+	glVertex3f( -w/2,  h/2,  d/2 );
+	glVertex3f( -w/2,  h/2, -d/2 );
+	glVertex3f( -w/2,  h/2, -d/2 );
+	glVertex3f( -w/2, -h/2, -d/2 );
+	glVertex3f( -w/2, -h/2, -d/2 );
+	glVertex3f( -w/2, -h/2,  d/2 );
 
-		glVertex3f( w/2, -h/2,  d/2 );
-		glVertex3f( w/2,  h/2,  d/2 );
-		glVertex3f( w/2,  h/2,  d/2 );
-		glVertex3f( w/2,  h/2, -d/2 );
-		glVertex3f( w/2,  h/2, -d/2 );
-		glVertex3f( w/2, -h/2, -d/2 );
-		glVertex3f( w/2, -h/2, -d/2 );
-		glVertex3f( w/2, -h/2,  d/2 );
+	glVertex3f( w/2, -h/2,  d/2 );
+	glVertex3f( w/2,  h/2,  d/2 );
+	glVertex3f( w/2,  h/2,  d/2 );
+	glVertex3f( w/2,  h/2, -d/2 );
+	glVertex3f( w/2,  h/2, -d/2 );
+	glVertex3f( w/2, -h/2, -d/2 );
+	glVertex3f( w/2, -h/2, -d/2 );
+	glVertex3f( w/2, -h/2,  d/2 );
 
-		glVertex3f( -w/2, -h/2,  d/2 );
-		glVertex3f( w/2, -h/2,  d/2 );
-		glVertex3f( -w/2,  h/2,  d/2 );
-		glVertex3f( w/2,  h/2,  d/2 );
-		glVertex3f( -w/2,  h/2, -d/2 );
-		glVertex3f( w/2,  h/2, -d/2 );
-		glVertex3f( -w/2, -h/2, -d/2 );
-		glVertex3f( w/2, -h/2, -d/2 );
+	glVertex3f( -w/2, -h/2,  d/2 );
+	glVertex3f( w/2, -h/2,  d/2 );
+	glVertex3f( -w/2,  h/2,  d/2 );
+	glVertex3f( w/2,  h/2,  d/2 );
+	glVertex3f( -w/2,  h/2, -d/2 );
+	glVertex3f( w/2,  h/2, -d/2 );
+	glVertex3f( -w/2, -h/2, -d/2 );
+	glVertex3f( w/2, -h/2, -d/2 );
 
 	glEnd();
 }
@@ -375,7 +375,7 @@ void display() {
 
 	for (int c = 0; c < 3; ++c) {
 		camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c])
-				* inertia;
+						* inertia;
 		camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
 	}
 
@@ -407,20 +407,20 @@ void display() {
 
 	}
 	glDisable(GL_DEPTH_TEST);
-			glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // invert color
+	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // invert color
 
-			videoPlayer->Render(0,height-20);
+	videoPlayer->Render(0,height-20);
 
-			glEnable(GL_DEPTH_TEST);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//TODO Testing viewports
-			/*
+	glEnable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//TODO Testing viewports
+	/*
 		glViewport(width/2, 0, width/2, height);
 		glLoadIdentity();
 
 		for (int c = 0; c < 3; ++c) {
 			camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c])
-					* inertia;
+	 * inertia;
 			camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
 		}
 
@@ -436,7 +436,7 @@ void display() {
 
 		// collider
 		paintCollider();
-		*/
+	 */
 
 	sdkStopTimer(&timer);
 
@@ -625,7 +625,7 @@ void motion(int x, int y) {
 
 		psystem->setColliderPos(p);
 	}
-		break;
+	break;
 	}
 
 	ox = x;
@@ -666,7 +666,7 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 		psystem->clipped = !psystem->clipped;
 		psystem->updateColor();
 		break;
-//end custom cases
+		//end custom cases
 
 	case ' ':
 		bPause = !bPause;
@@ -748,7 +748,7 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 
 		psystem->addSphere(0, posw, velw, ballr, pr * 2.0f);
 	}
-		break;
+	break;
 
 	case 'd':
 		displaySliders = !displaySliders;
@@ -774,8 +774,8 @@ void special(int k, int x, int y) {
 
 void idle(void) {
 	if ((idleCounter++ > idleDelay) && (demoMode == false)) {
-//        demoMode = true;
-//        printf("Entering demo mode\n");
+		//        demoMode = true;
+		//        printf("Entering demo mode\n");
 	}
 
 	if (demoMode) {
@@ -809,27 +809,27 @@ void initParams() {
 		params->AddParam(
 				new Param<float>("time step", timestep, 0.0f, 1.0f, 0.01f,
 						&timestep));
-//		params->AddParam(
-//				new Param<float>("damping", damping, 0.0f, 1.0f, 0.001f,
-//						&damping));
-//		params->AddParam(
-//				new Param<float>("gravity", gravity, 0.0f, 0.001f, 0.0001f,
-//						&gravity));
-//		params->AddParam(
-//				new Param<int>("ball radius", ballr, 1, 20, 1, &ballr));
-//
-//		params->AddParam(
-//				new Param<float>("collide spring", collideSpring, 0.0f, 1.0f,
-//						0.001f, &collideSpring));
-//		params->AddParam(
-//				new Param<float>("collide damping", collideDamping, 0.0f, 0.1f,
-//						0.001f, &collideDamping));
-//		params->AddParam(
-//				new Param<float>("collide shear", collideShear, 0.0f, 0.1f,
-//						0.001f, &collideShear));
-//		params->AddParam(
-//				new Param<float>("collide attract", collideAttraction, 0.0f,
-//						0.1f, 0.001f, &collideAttraction));
+		//		params->AddParam(
+		//				new Param<float>("damping", damping, 0.0f, 1.0f, 0.001f,
+		//						&damping));
+		//		params->AddParam(
+		//				new Param<float>("gravity", gravity, 0.0f, 0.001f, 0.0001f,
+		//						&gravity));
+		//		params->AddParam(
+		//				new Param<int>("ball radius", ballr, 1, 20, 1, &ballr));
+		//
+		//		params->AddParam(
+		//				new Param<float>("collide spring", collideSpring, 0.0f, 1.0f,
+		//						0.001f, &collideSpring));
+		//		params->AddParam(
+		//				new Param<float>("collide damping", collideDamping, 0.0f, 0.1f,
+		//						0.001f, &collideDamping));
+		//		params->AddParam(
+		//				new Param<float>("collide shear", collideShear, 0.0f, 0.1f,
+		//						0.001f, &collideShear));
+		//		params->AddParam(
+		//				new Param<float>("collide attract", collideAttraction, 0.0f,
+		//						0.1f, 0.001f, &collideAttraction));
 		params->AddParam(
 				new Param<int>("range color", rangeColor, 0, 256, 200,
 						&rangeColor));
@@ -899,7 +899,7 @@ int main(int argc, char **argv) {
 			gridSize.z, gridSize.x * gridSize.y * gridSize.z);
 
 	bool benchmark = checkCmdLineFlag(argc, (const char **) argv, "benchmark")
-			!= 0;
+					!= 0;
 
 	if (checkCmdLineFlag(argc, (const char **) argv, "i")) {
 		numIterations = getCmdLineArgumentInt(argc, (const char **) argv, "i");
@@ -938,10 +938,10 @@ int main(int argc, char **argv) {
 
 
 	if (checkCmdLineFlag(argc, (const char **) argv, "colorconfig")) {
-				char* pth;
-				getCmdLineArgumentString(argc, (const char **) argv, "colorconfig",&pth);
-				colorConfig(pth);
-			}
+		char* pth;
+		getCmdLineArgumentString(argc, (const char **) argv, "colorconfig",&pth);
+		colorConfig(pth);
+	}
 
 	initParams();
 

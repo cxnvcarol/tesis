@@ -44,10 +44,10 @@ void ParticleSystem::setFileSource(string filePath) {
 
 ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize,
 		bool bUseOpenGL) :
-		m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(
-				numParticles), m_hPos(0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(
-				gridSize), m_timer(NULL), m_solverIterations(1), alpha(1), clipped(
-				false), currentVariable(0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(0) {
+				m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(
+						numParticles), m_hPos(0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(
+								gridSize), m_timer(NULL), m_solverIterations(1), alpha(1), clipped(
+										false), currentVariable(0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(0) {
 	colorRangeMode=COLOR_GRADIENT;
 
 	gradientInitialColor=new float[3]{1,1,0};//{1,1,0};//yellow default
@@ -130,7 +130,7 @@ void ParticleSystem::colorVar(int index, float *r) {
 	/*
 	float cini[3]={0,0,0};
 	float cfin[3]={1,1,1};
-	*/
+	 */
 
 	//if(colorRangeMode==COLOR_GRADIENT)//{do this... } else {.. too (for now)} //TODO!
 	float *cini=gradientInitialColor;
@@ -178,7 +178,7 @@ void ParticleSystem::colorVar(int index, float *r) {
 	{
 		difb=-difb;
 		varPrima=1-varPrima;
-	colorMin=cfin[2];
+		colorMin=cfin[2];
 	}
 	r[2]=varPrima*difb+colorMin;
 }
@@ -501,7 +501,7 @@ void ParticleSystem::setArray(ParticleArray array, const float *data, int start,
 			registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
 		}
 	}
-		break;
+	break;
 
 	case VELOCITY:
 		copyArrayToDevice(m_dVel, data, start * 4 * sizeof(float),
@@ -548,8 +548,13 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	cout << fileP;
 	fflush(stdout);
 
+
+	xArray = (float*) malloc(MAX_CELLS * sizeof(float));
+	yArray = (float*) malloc(MAX_CELLS * sizeof(float));
+	zArray = (float*) malloc(MAX_CELLS * sizeof(float));
+
 	float pressure, temperature, velMag, velX, velY, velZ, time, posX, posY,
-			posZ;
+	posZ;
 	string wall;
 	xmax = 0, ymax = 0, zmax = 0, xmin = 0, ymin = 0, zmin = 0;
 	tmin = MAX_INT, tmax = -MAX_INT, pmin = MAX_INT, pmax = -MAX_INT;
@@ -593,21 +598,21 @@ void ParticleSystem::loadSimulationData(string fileP) {
 				if(time!=lasttime)
 				{
 					lasttime=time;
-					*times++=time;
+					dataframe newFrame=frames[nframes-1];
+					newFrame.time=time;
 					nframes++;
 					if(tam>tamMax)
 						tamMax=tam;
 					tam=0;
-					xArray = (float*) malloc(MAX_CELLS * sizeof(float));
-					yArray = (float*) malloc(MAX_CELLS * sizeof(float));
-					zArray = (float*) malloc(MAX_CELLS * sizeof(float));
 					temp = (float*) malloc(MAX_CELLS * sizeof(float));
 					pressureArray = (float*) malloc(MAX_CELLS * sizeof(float));
 
-					//frames++;
-					//datasimulation* newFrame=frames[nframes-1];
-					//newFrame->pressurePointer=&pressureArray;
-					//newFrame->temperaturePointer=&temp;
+					velArray=(velocity*)malloc(MAX_CELLS*sizeof(velocity));
+
+					printf("\npp:%d  *pp:%f   &pp:%d\n",pressureArray,*pressureArray,&pressureArray);
+
+					newFrame.pressurePointer=pressureArray;
+					newFrame.temperaturePointer=temp;
 					//TODO here I assumed that coordinates order is the same in each frame. Check it out!!
 
 					printf("new time: %f;  nframes: %d",time,nframes);
@@ -626,10 +631,10 @@ void ParticleSystem::loadSimulationData(string fileP) {
 			}
 			tempVar++;
 		}
-//		if(temperature>tempMax)
-//		  tempMax=temperature;
-//		if(temperature<tempMin)
-//		  tempMin=temperature;
+		//		if(temperature>tempMax)
+		//		  tempMax=temperature;
+		//		if(temperature<tempMin)
+		//		  tempMin=temperature;
 		if (temperature > tmax)
 			tmax = temperature;
 		if (temperature < tmin) {
@@ -664,15 +669,15 @@ void ParticleSystem::loadSimulationData(string fileP) {
 		pressureArray[tam] = pressure;
 		//cout<<temp[tam];
 		tam++;
-//		try{//skip data to accelerate rendering
-//			for (int var = 0; var < 10; ++var) {
-//				std::getline(data,line);
-//			}
-//
-//		}
-//		catch (int e) {
-//
-//		}
+		//		try{//skip data to accelerate rendering
+		//			for (int var = 0; var < 10; ++var) {
+		//				std::getline(data,line);
+		//			}
+		//
+		//		}
+		//		catch (int e) {
+		//
+		//		}
 	}
 	if(tam>tamMax)
 		tamMax=tam;//last time read
@@ -726,7 +731,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 		}
 
 	}
-		break;
+	break;
 
 	case CONFIG_GRID: {
 		float jitter = m_params.particleRadius;
@@ -736,7 +741,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 		initGrid(gridSize, m_params.particleRadius * 2.0f, jitter,
 				m_numParticles);
 	}
-		break;
+	break;
 	case CONFIG_SIMULATION_DATA: {
 		int p = 0, v = 0;
 		printf("xmall: %f, ymall: %f, zmall: %f", xMaxAllowed, yMaxAllowed,
@@ -774,7 +779,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 		}
 
 	}
-		break;
+	break;
 	}
 
 	printf("\ncoordXmax: %f, coordXmin: %f\n", maxF, min);
@@ -805,8 +810,8 @@ void ParticleSystem::histogramFunc(int ind){
 void ParticleSystem::generateHistogram() {
 
 	for (int var = 0; var < m_numberHistogramIntervals; ++var) {
-			m_histogram[var]=0;
-		}
+		m_histogram[var]=0;
+	}
 
 	if (!clipped) {
 		//update mix-max local:
@@ -815,56 +820,56 @@ void ParticleSystem::generateHistogram() {
 
 		width_histogram=maxLocalVar-minLocalVar;
 		width_histogram=width_histogram/m_numberHistogramIntervals;
-			for (uint i = 0; i < m_numParticles; i++) {
+		for (uint i = 0; i < m_numParticles; i++) {
 
-				histogramFunc(i);
-			}
-		} else {
-			float3 leftDownBack = m_params.colliderPos
-					- m_params.selectSize/2;
-			float3 rightUpFront = m_params.colliderPos
-					+ m_params.selectSize/2;
+			histogramFunc(i);
+		}
+	} else {
+		float3 leftDownBack = m_params.colliderPos
+				- m_params.selectSize/2;
+		float3 rightUpFront = m_params.colliderPos
+				+ m_params.selectSize/2;
 
-			//update min-max local
+		//update min-max local
 
-			maxLocalVar=-MAX_INT;
-			minLocalVar=MAX_INT;
-			for (uint i = 0; i < m_numParticles; i++) {
-				if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
-						&& m_hPos[i * 4 + 1] > leftDownBack.y
-						&& m_hPos[i * 4 + 1] < rightUpFront.y
-						&& m_hPos[i * 4 + 2] > leftDownBack.z
-						&& m_hPos[i * 4 + 2] < rightUpFront.z) {
-					switch(currentVariable)
-					{
-					case VAR_TEMPERATURE:
-						if(temp[i]<minLocalVar) minLocalVar=temp[i];
-						else if(temp[i]>maxLocalVar) maxLocalVar=temp[i];
-						break;
-					case VAR_PRESSURE:
-						if(pressureArray[i]<minLocalVar) minLocalVar=pressureArray[i];
-						else if(pressureArray[i]>maxLocalVar) maxLocalVar=pressureArray[i];
-						break;
-					}
-				}
-			}
-			//end update min-max
-
-			width_histogram=maxLocalVar-minLocalVar;
-			width_histogram=width_histogram/m_numberHistogramIntervals;
-			for (uint i = 0; i < m_numParticles; i++) {
-				if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
-						&& m_hPos[i * 4 + 1] > leftDownBack.y
-						&& m_hPos[i * 4 + 1] < rightUpFront.y
-						&& m_hPos[i * 4 + 2] > leftDownBack.z
-						&& m_hPos[i * 4 + 2] < rightUpFront.z) {
-					histogramFunc(i);
+		maxLocalVar=-MAX_INT;
+		minLocalVar=MAX_INT;
+		for (uint i = 0; i < m_numParticles; i++) {
+			if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
+					&& m_hPos[i * 4 + 1] > leftDownBack.y
+					&& m_hPos[i * 4 + 1] < rightUpFront.y
+					&& m_hPos[i * 4 + 2] > leftDownBack.z
+					&& m_hPos[i * 4 + 2] < rightUpFront.z) {
+				switch(currentVariable)
+				{
+				case VAR_TEMPERATURE:
+					if(temp[i]<minLocalVar) minLocalVar=temp[i];
+					else if(temp[i]>maxLocalVar) maxLocalVar=temp[i];
+					break;
+				case VAR_PRESSURE:
+					if(pressureArray[i]<minLocalVar) minLocalVar=pressureArray[i];
+					else if(pressureArray[i]>maxLocalVar) maxLocalVar=pressureArray[i];
+					break;
 				}
 			}
 		}
+		//end update min-max
+
+		width_histogram=maxLocalVar-minLocalVar;
+		width_histogram=width_histogram/m_numberHistogramIntervals;
+		for (uint i = 0; i < m_numParticles; i++) {
+			if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
+					&& m_hPos[i * 4 + 1] > leftDownBack.y
+					&& m_hPos[i * 4 + 1] < rightUpFront.y
+					&& m_hPos[i * 4 + 2] > leftDownBack.z
+					&& m_hPos[i * 4 + 2] < rightUpFront.z) {
+				histogramFunc(i);
+			}
+		}
+	}
 	printf("minLocal:%f, maxLocal:%f\n\n",minLocalVar,maxLocalVar);
 
-	 FILE * myfile=fopen("histog.dat","w");
+	FILE * myfile=fopen("histog.dat","w");
 
 
 
@@ -880,38 +885,38 @@ void ParticleSystem::generateHistogram() {
 
 }
 void ParticleSystem::addSphere(int start, float *pos, float *vel, int r,
-	float spacing) {
-uint index = start;
+		float spacing) {
+	uint index = start;
 
-for (int z = -r; z <= r; z++) {
-	for (int y = -r; y <= r; y++) {
-		for (int x = -r; x <= r; x++) {
-			float dx = x * spacing;
-			float dy = y * spacing;
-			float dz = z * spacing;
-			float l = sqrtf(dx * dx + dy * dy + dz * dz);
-			float jitter = m_params.particleRadius * 0.01f;
+	for (int z = -r; z <= r; z++) {
+		for (int y = -r; y <= r; y++) {
+			for (int x = -r; x <= r; x++) {
+				float dx = x * spacing;
+				float dy = y * spacing;
+				float dz = z * spacing;
+				float l = sqrtf(dx * dx + dy * dy + dz * dz);
+				float jitter = m_params.particleRadius * 0.01f;
 
-			if ((l <= m_params.particleRadius * 2.0f * r)
-					&& (index < m_numParticles)) {
-				m_hPos[index * 4] = pos[0] + dx
-						+ (frand() * 2.0f - 1.0f) * jitter;
-				m_hPos[index * 4 + 1] = pos[1] + dy
-						+ (frand() * 2.0f - 1.0f) * jitter;
-				m_hPos[index * 4 + 2] = pos[2] + dz
-						+ (frand() * 2.0f - 1.0f) * jitter;
-				m_hPos[index * 4 + 3] = pos[3];
+				if ((l <= m_params.particleRadius * 2.0f * r)
+						&& (index < m_numParticles)) {
+					m_hPos[index * 4] = pos[0] + dx
+							+ (frand() * 2.0f - 1.0f) * jitter;
+					m_hPos[index * 4 + 1] = pos[1] + dy
+							+ (frand() * 2.0f - 1.0f) * jitter;
+					m_hPos[index * 4 + 2] = pos[2] + dz
+							+ (frand() * 2.0f - 1.0f) * jitter;
+					m_hPos[index * 4 + 3] = pos[3];
 
-				m_hVel[index * 4] = vel[0];
-				m_hVel[index * 4 + 1] = vel[1];
-				m_hVel[index * 4 + 2] = vel[2];
-				m_hVel[index * 4 + 3] = vel[3];
-				index++;
+					m_hVel[index * 4] = vel[0];
+					m_hVel[index * 4 + 1] = vel[1];
+					m_hVel[index * 4 + 2] = vel[2];
+					m_hVel[index * 4 + 3] = vel[3];
+					index++;
+				}
 			}
 		}
 	}
-}
 
-setArray(POSITION, m_hPos, start, index);
-setArray(VELOCITY, m_hVel, start, index);
+	setArray(POSITION, m_hPos, start, index);
+	setArray(VELOCITY, m_hVel, start, index);
 }
