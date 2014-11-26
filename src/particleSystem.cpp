@@ -48,6 +48,11 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize,
 				numParticles), m_hPos(0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(
 				gridSize), m_timer(NULL), m_solverIterations(1), alpha(1), clipped(
 				false), currentVariable(0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(0) {
+	colorRangeMode=COLOR_GRADIENT;
+
+	gradientInitialColor=new float[3]{1,1,0};//{1,1,0};//yellow default
+	gradientFinalColor=new float[3]{1,0,0};//{1,0,0};//red default
+
 	m_numGridCells = m_gridSize.x * m_gridSize.y * m_gridSize.z;
 	//    float3 worldSize = make_float3(2.0f, 2.0f, 2.0f);
 
@@ -59,7 +64,7 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize,
 	m_params.numBodies = m_numParticles;
 
 	//TODO set radius with intelligence
-	m_params.particleRadius = 1.0f / 640.0f;
+	m_params.particleRadius = 1.0f / 640.0f*4;
 
 	//m_params.particleRadius = 1.0f / 64000.0f;
 	m_params.colliderPos = make_float3(-1.2f, -0.8f, 0.8f);
@@ -105,14 +110,6 @@ inline float lerp(float a, float b, float t) {
 	return a + t * (b - a);
 }
 
-// create a color ramp
-void ParticleSystem::colorTemperature(int index, float *r) {
-
-	r[0] = 0;
-	r[1] = 0;
-	r[2] = (temp[index] - tmin) / (tmax - tmin);
-
-}
 
 void ParticleSystem::colorVariable(int index, float *r) {
 
@@ -126,6 +123,64 @@ void ParticleSystem::colorVariable(int index, float *r) {
 		r[2] = 0;
 	}
 
+}
+
+void ParticleSystem::colorVar(int index, float *r) {
+
+	/*
+	float cini[3]={0,0,0};
+	float cfin[3]={1,1,1};
+	*/
+
+	//if(colorRangeMode==COLOR_GRADIENT)//{do this... } else {.. too (for now)} //TODO!
+	float *cini=gradientInitialColor;
+	float *cfin=gradientFinalColor;
+
+	float varNorm=0;//in [0,1]
+
+	switch(currentVariable)
+	{
+	case VAR_TEMPERATURE:
+		varNorm = (temp[index] - tmin) / (tmax - tmin);
+		break;
+	case VAR_PRESSURE:
+		varNorm = (pressureArray[index] - pmin) / (pmax - pmin);
+		break;
+	}
+
+	float difr=cfin[0]-cini[0];
+	float difg=cfin[1]-cini[1];
+	float difb=cfin[2]-cini[2];
+
+
+	float varPrima=varNorm;
+	float colorMin=cini[0];
+	if(difr<0)
+	{
+		difr=-difr;
+		varPrima=1-varPrima;
+		colorMin=cfin[0];
+	}
+	r[0]=varPrima*difr+colorMin;
+	varPrima=varNorm;
+	colorMin=cini[1];
+	if(difg<0)
+	{
+		difg=-difg;
+		varPrima=1-varPrima;
+		colorMin=cfin[1];
+	}
+	r[1]=varPrima*difg+colorMin;
+
+	varPrima=varNorm;
+	colorMin=cini[2];
+	if(difr<0)
+	{
+		difb=-difb;
+		varPrima=1-varPrima;
+	colorMin=cfin[2];
+	}
+	r[2]=varPrima*difb+colorMin;
 }
 
 void colorRamp(float t, float *r) {
@@ -220,7 +275,7 @@ void ParticleSystem::initialSimulationColor() {
 		float t = i / (float) m_numParticles;
 
 		if (m_numParticles > 1)
-			colorVariable(i, ptr);
+			colorVar(i, ptr);//colorVariable(i, ptr);
 		else
 			colorRamp(t, ptr);		//here is the color initialization
 		ptr += 3;
@@ -250,6 +305,11 @@ void ParticleSystem::updateColor() {
 	//use paramMax and paramMin values to the scale of color
 	//TODO use color scale defined in .txt or .properties
 
+	float *cini=gradientInitialColor;
+		float *cfin=gradientFinalColor;
+
+		printf("cin: %f,%f,%f\n",cini[0],cini[1],cini[2]);
+		printf("cfin: %f,%f,%f\n",cfin[0],cfin[1],cfin[2]);
 	// fill color buffer
 	glBindBufferARB(GL_ARRAY_BUFFER, m_colorVBO);
 	float *data = (float *) glMapBufferARB(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -258,7 +318,7 @@ void ParticleSystem::updateColor() {
 	if (!clipped) {
 		for (uint i = 0; i < m_numParticles; i++) {
 
-			colorVariable(i, ptr);
+			colorVar(i, ptr);//colorVariable(i, ptr);
 			ptr += 3;
 			*ptr++ = alpha;
 		}
@@ -274,7 +334,7 @@ void ParticleSystem::updateColor() {
 					&& m_hPos[i * 4 + 1] < rightUpFront.y
 					&& m_hPos[i * 4 + 2] > leftDownBack.z
 					&& m_hPos[i * 4 + 2] < rightUpFront.z) {
-				colorVariable(i, ptr);
+				colorVar(i, ptr);//colorVariable(i, ptr);
 				ptr += 3;
 				*ptr++ = alpha;
 			} else {

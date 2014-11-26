@@ -42,11 +42,21 @@ class ParticleSystem
 
         bool clipped;
         int currentVariable;
+        int colorRangeMode;
+
+        float* gradientInitialColor=(float*)calloc(3,sizeof(float));
+        float* gradientFinalColor=(float*)calloc(3,sizeof(float));
 
         enum FixedVariables{
         	VAR_TEMPERATURE,
         	VAR_PRESSURE,
         	_NUM_VARIABLES
+        };
+        enum FixedColorRangeModes{
+         	COLOR_GRADIENT,
+         	COLOR_SHORT_RAINBOW,
+         	COLOR_FULL_RAINBOW,
+            _NUM_MODES
         };
         enum ParticleConfig
         {
@@ -73,9 +83,25 @@ class ParticleSystem
         {
         	clipped=cl;
         }
+        void setColorRangeMode(int mode)
+        {
+        	colorRangeMode=mode;
+        }
+        void setColorInitialGradient(float* ini)
+        {
+        	gradientInitialColor=ini;
+        	updateColor();
+        }
+        void setColorFinalGradient(float* fini)
+        {
+        	gradientFinalColor=fini;
+        	updateColor();
+
+        }
 
         void colorTemperature(int t, float* r);
         void colorVariable(int t,float* r);
+        void colorVar(int t,float* r);
         void setFileSource(string filePath);
         void update(float deltaTime);
         void initDefaultData();

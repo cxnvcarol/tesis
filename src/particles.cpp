@@ -131,7 +131,95 @@ extern "C" void cudaGLInit(int argc, char **argv);
 extern "C" void copyArrayFromDevice(void *host, const void *device,
 		unsigned int vbo, int size);
 
+void colorConfig(string configFilePath)
+{
+	if(configFilePath.empty())
+	{
+		psystem->setColorRangeMode(psystem->COLOR_GRADIENT);
+		psystem->setColorInitialGradient(new float[3]{1,1,0});
+		psystem->setColorFinalGradient(new float[3]{1,0,0});
+	}
+	else{
+		std::ifstream data(configFilePath.c_str());
 
+		std::string line;
+
+		std::cout << line << "\n";
+		int nlines=0;
+		while (std::getline(data, line)) {
+
+			std::istringstream is_line(line);
+			  std::string key;
+			  if( std::getline(is_line, key, '=') )
+			  {
+			    std::string value;
+			    if( std::getline(is_line, value) )
+			      {
+			    	std::cout<<key<<"::"<< value<<"\n";
+
+			      }
+			    if(key.find("colormode")!=-1)
+			    {
+
+			    	//posX = (float) ::atof(cell.c_str());
+			    	if(value.find("gradient")!=-1)
+			    	{
+			    		printf("gradient!!!");
+			    		psystem->setColorRangeMode(psystem->COLOR_GRADIENT);
+			    	}
+			    	else if(value.find("short_rainbow")!=-1)
+			    	{
+			    		psystem->setColorRangeMode(psystem->COLOR_SHORT_RAINBOW);
+			    	}
+			    	else if(value.find("full_rainbow")!=-1)
+			    	{
+			    		psystem->setColorRangeMode(psystem->COLOR_FULL_RAINBOW);
+			    	}
+			    	//TODO parse to float values and set psystem->...
+			    }
+			    else if(key.find("color")!=-1)
+			    {
+			    	//TODO generalize to include n colors & generate gradient according to that!
+			    	if(key.find("color1")!=-1)
+			    	{
+			    		const char* str=value.c_str();
+			    		char *token, *strpos = const_cast<char*>(str);;
+
+			    		float *newcolor=(float*)calloc(3,sizeof(float));
+			    		for (int var = 0; var < 3; ++var) {
+			    			token=strsep(&strpos,",");
+			    			newcolor[var]=(float) ::atof(token);
+
+						}
+			    		psystem->setColorInitialGradient(newcolor);
+			    		printf("\nnc: %f,%f,%f\n",newcolor[0],newcolor[1],newcolor[2]);
+			    	}
+
+			    	else if(key.find("color2")!=-1)
+			    				    	{
+			    		printf("color2!!");
+
+			    				    		const char* str=value.c_str();
+			    				    		char *token, *strpos = const_cast<char*>(str);;
+
+			    				    		float *newcolor=(float*)calloc(3,sizeof(float));
+			    				    		for (int var = 0; var < 3; ++var) {
+			    				    			token=strsep(&strpos,",");
+			    				    			newcolor[var]=(float) ::atof(token);
+
+			    							}
+			    				    		psystem->setColorFinalGradient(newcolor);
+			    				    	}
+			    }
+			  }
+
+			nlines++;
+		}
+
+
+	}
+
+}
 void initSimulationSystem(uint3 gridSize, bool bUseOpenGL, string filePath) {
 	//psystem=new ParticleSystem(0,gridSize,bUseOpenGL);
 	psystem = new ParticleSystem(1, gridSize, bUseOpenGL);
@@ -191,7 +279,7 @@ void initGL(int *argc, char **argv) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0);
-	glClearColor(0.1, 0., 0.2, 1.0);
+	glClearColor(0.2, 0.2, 0.2, 1.0);//TODO should be in colores.config
 
 	//enable alpha for simulation points
 	glEnable(GL_BLEND);
@@ -833,9 +921,11 @@ int main(int argc, char **argv) {
 		initGL(&argc, argv);
 		cudaGLInit(argc, argv);
 	}
-	if (checkCmdLineFlag(argc, (const char **) argv, "data")) {
+
+
+	if (checkCmdLineFlag(argc, (const char **) argv, "datafile")) {
 		char* pth;
-		getCmdLineArgumentString(argc, (const char **) argv, "data",&pth);
+		getCmdLineArgumentString(argc, (const char **) argv, "datafile",&pth);
 		fflush(stdout);
 
 		printf("datafile: %s\n",pth);
@@ -845,6 +935,14 @@ int main(int argc, char **argv) {
 	}
 	else
 		initSimulationSystem(gridSize, true, DATAFILE_PATH);
+
+
+	if (checkCmdLineFlag(argc, (const char **) argv, "colorconfig")) {
+				char* pth;
+				getCmdLineArgumentString(argc, (const char **) argv, "colorconfig",&pth);
+				colorConfig(pth);
+			}
+
 	initParams();
 
 	if (!g_refFile) {
