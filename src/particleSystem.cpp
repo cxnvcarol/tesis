@@ -303,13 +303,7 @@ void ParticleSystem::setAlpha(float al) {
 void ParticleSystem::updateColor() {
 	//TODO switch case for every variable - should be a global variable so this is done for active variable!
 	//use paramMax and paramMin values to the scale of color
-	//TODO use color scale defined in .txt or .properties
 
-	float *cini=gradientInitialColor;
-		float *cfin=gradientFinalColor;
-
-		printf("cin: %f,%f,%f\n",cini[0],cini[1],cini[2]);
-		printf("cfin: %f,%f,%f\n",cfin[0],cfin[1],cfin[2]);
 	// fill color buffer
 	glBindBufferARB(GL_ARRAY_BUFFER, m_colorVBO);
 	float *data = (float *) glMapBufferARB(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
