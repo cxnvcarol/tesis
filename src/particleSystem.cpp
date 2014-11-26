@@ -1,5 +1,5 @@
 /*
- * Copyright 1993-2014 NVIDIA Corporation.  All rights reserved.
+// * Copyright 1993-2014 NVIDIA Corporation.  All rights reserved.
  *
  * Please refer to the NVIDIA end user license agreement (EULA) associated
  * with this source code for terms and conditions that govern your use of
@@ -38,7 +38,7 @@ GLenum modeVolume = GL_TRIANGLES_ADJACENCY;
 void ParticleSystem::setFileSource(string filePath) {
 	m_bInitialized = false;
 	loadSimulationData(filePath);
-	m_numParticles = tam;
+	m_numParticles = tamMax;
 	_initialize(m_numParticles);
 }
 
@@ -64,7 +64,7 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize,
 	m_params.numBodies = m_numParticles;
 
 	//TODO set radius with intelligence
-	m_params.particleRadius = 1.0f / 640.0f*4;
+	m_params.particleRadius = 1.0f / 640.0f*3;
 
 	//m_params.particleRadius = 1.0f / 64000.0f;
 	m_params.colliderPos = make_float3(-1.2f, -0.8f, 0.8f);
@@ -553,11 +553,7 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	printf("iniciaCarga");
 	cout << fileP;
 	fflush(stdout);
-	xArray = (float*) malloc(NINPUT * sizeof(float));
-	yArray = (float*) malloc(NINPUT * sizeof(float));
-	zArray = (float*) malloc(NINPUT * sizeof(float));
-	temp = (float*) malloc(NINPUT * sizeof(float));
-	pressureArray = (float*) malloc(NINPUT * sizeof(float));
+
 	float pressure, temperature, velMag, velX, velY, velZ, time, posX, posY,
 			posZ;
 	string wall;
@@ -569,6 +565,8 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	std::string line;
 	getline(data, line);    //skip first row
 	std::cout << line << "\n";
+	float lasttime=-1;
+	int tam=0;
 	while (std::getline(data, line)) {
 		if (tam < 2)
 			std::cout << line << "\n";
@@ -584,21 +582,44 @@ void ParticleSystem::loadSimulationData(string fileP) {
 			case 1:
 				temperature = (float) ::atof(cell.c_str());
 				break;
-//			case 3:
-//				velMag=(float)::atof(cell.c_str());
-//				break;
-//			case 4:
-//				velX=(float)::atof(cell.c_str());
-//				break;
-//			case 5:
-//				velY=(float)::atof(cell.c_str());
-//				break;
-//			case 6:
-//				velZ=(float)::atof(cell.c_str());
-//				break;
-//			case 7:
-//				time=(float)::atof(cell.c_str());
-//				break;
+			case 3:
+				velMag=(float)::atof(cell.c_str());
+				break;
+			case 4:
+				velX=(float)::atof(cell.c_str());
+				break;
+			case 5:
+				velY=(float)::atof(cell.c_str());
+				break;
+			case 6:
+				velZ=(float)::atof(cell.c_str());
+				break;
+			case 7:
+				time=(float)::atof(cell.c_str());
+				if(time!=lasttime)
+				{
+					lasttime=time;
+					*times++=time;
+					nframes++;
+					if(tam>tamMax)
+						tamMax=tam;
+					tam=0;
+					xArray = (float*) malloc(MAX_CELLS * sizeof(float));
+					yArray = (float*) malloc(MAX_CELLS * sizeof(float));
+					zArray = (float*) malloc(MAX_CELLS * sizeof(float));
+					temp = (float*) malloc(MAX_CELLS * sizeof(float));
+					pressureArray = (float*) malloc(MAX_CELLS * sizeof(float));
+
+					//frames++;
+					//datasimulation* newFrame=frames[nframes-1];
+					//newFrame->pressurePointer=&pressureArray;
+					//newFrame->temperaturePointer=&temp;
+					//TODO here I assumed that coordinates order is the same in each frame. Check it out!!
+
+					printf("new time: %f;  nframes: %d",time,nframes);
+
+				}
+				break;
 			case 8:
 				posX = (float) ::atof(cell.c_str());
 				break;
@@ -659,6 +680,9 @@ void ParticleSystem::loadSimulationData(string fileP) {
 //
 //		}
 	}
+	if(tam>tamMax)
+		tamMax=tam;//last time read
+	//TODO assign pointers of temp and pressureArray to the first one of *frames
 	xMaxAllowed = max(fabsf(xmax), fabsf(xmin));
 	yMaxAllowed = max(fabsf(ymax), fabsf(ymin));
 	zMaxAllowed = max(fabsf(zmax), fabsf(zmin));

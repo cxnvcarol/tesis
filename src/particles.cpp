@@ -102,7 +102,7 @@ float collideDamping = 0.02f;
 float collideShear = 0.1f;
 float collideAttraction = 0.0f;
 int rangeColor = 200;
-int currentFrame = 1;
+int currentFrame = 8;
 
 ParticleSystem *psystem = 0;
 

@@ -23,7 +23,7 @@
 //custom
 #include "ModelOBJ.h"
 
-#define NINPUT	2500000
+#define MAX_CELLS	2500000
 
 #define PATH_INI	"."
 #define PATH_INI2	"/home/cxnv/workspace/Simulator"
@@ -31,6 +31,7 @@
 #define DATAFILE_PATH	PATH_INI"/data/datos.csv"
 
 #define MAX_INT 2147483648
+#define MAX_ITERATIONS 50
 #define MAX_HISTOGRAM_INTERVALS 100
 
 // Particle system class
@@ -265,6 +266,13 @@ class ParticleSystem
         struct cudaGraphicsResource *m_cuda_posvbo_resource; // handles OpenGL-CUDA exchange
         struct cudaGraphicsResource *m_cuda_colorvbo_resource; // handles OpenGL-CUDA exchange
 
+
+        struct datasimulation
+        {
+            float** temperaturePointer;//TODO include velocity
+            float** pressurePointer;
+        };
+
         // params
         SimParams m_params;
         uint3 m_gridSize;
@@ -278,14 +286,20 @@ class ParticleSystem
         //custom
         Model_OBJ obj;
 
+        datasimulation* frames[MAX_ITERATIONS];//pointers to data of each frame//calloc?
+
+        int nframes=0;
+
+        float * times=(float*)calloc(MAX_ITERATIONS,sizeof(float));
+
+        //following are used for current frame:
         float * xArray;
         float * yArray;
         float * zArray;
         float * temp;
         float * pressureArray;
 
-        float * allVariables;
-        int tam;
+        int tamMax;
         float xmax,ymax,zmax;
         float xmin,ymin,zmin;
         float tmin,tmax,pmin,pmax;
