@@ -102,7 +102,6 @@ float collideDamping = 0.02f;
 float collideShear = 0.1f;
 float collideAttraction = 0.0f;
 int rangeColor = 200;
-int currentFrame = 8;
 
 ParticleSystem *psystem = 0;
 
@@ -221,8 +220,7 @@ void colorConfig(string configFilePath)
 
 }
 void initSimulationSystem(uint3 gridSize, bool bUseOpenGL, string filePath) {
-	//psystem=new ParticleSystem(0,gridSize,bUseOpenGL);
-	psystem = new ParticleSystem(1, gridSize, bUseOpenGL);
+	psystem = new ParticleSystem(gridSize, bUseOpenGL);
 
 
 	if(filePath.empty())
@@ -389,7 +387,7 @@ void display() {
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(2.0);
 
-	// collider
+	// collider is the selector box
 	paintCollider();
 
 	if (renderer && displayEnabled) {
@@ -406,6 +404,7 @@ void display() {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	}
+	{//display slider of player
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // invert color
 
@@ -413,6 +412,7 @@ void display() {
 
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 	//TODO Testing viewports
 	/*
 		glViewport(width/2, 0, width/2, height);
@@ -504,12 +504,19 @@ void mouse(int button, int state, int x, int y) {
 	demoMode = false;
 	idleCounter = 0;
 
+	int last=psystem->getCurrentFrame();
+	videoPlayer->Mouse(x,y,button,state);
+	if(last!=psystem->getCurrentFrame()){
+		psystem->updateFrame();
+
+	}
 	if (displaySliders) {
 		if (params->Mouse(x, y, button, state)) {
 			glutPostRedisplay();
 			return;
 		}
 	}
+
 
 	glutPostRedisplay();
 }
@@ -651,6 +658,7 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 			psystem->initialSimulationColor();
 		break;
 	case 'l':
+		//printf("\nframe::%d\n",psystem->getCurrentFrame());
 		psystem->changeActiveVariable();
 		break;
 
@@ -837,7 +845,8 @@ void initParams() {
 
 	//create videoplayer
 	videoPlayer=new ParamListGL("videoplayer");
-	videoPlayer->AddParam(new Param<int>("frame playing",currentFrame,0,10,1,&currentFrame));
+	printf("total frames: %d\n\n",psystem->getFramesCount());
+	videoPlayer->AddParam(new Param<int>("frame playing",psystem->getCurrentFrame(),0,psystem->getFramesCount()+1,1,psystem->getFramePointer()));
 }
 
 void mainMenu(int i) {

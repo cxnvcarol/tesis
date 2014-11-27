@@ -38,12 +38,14 @@
 class ParticleSystem
 {
 public:
-	ParticleSystem(uint numParticles, uint3 gridSize, bool bUseOpenGL);
+	ParticleSystem(uint3 gridSize, bool bUseOpenGL);
 	~ParticleSystem();
 
 	bool clipped;
 	int currentVariable;
 	int colorRangeMode;
+
+
 
 	float* gradientInitialColor=(float*)calloc(3,sizeof(float));
 	float* gradientFinalColor=(float*)calloc(3,sizeof(float));
@@ -78,6 +80,16 @@ public:
 	//TODO quitar después, es temporal
 	void initialSimulationColor();
 	void updateColor();
+	void updateFrame();
+	void setCurrentFrame(int newframe);
+	void forward()
+	{
+		setCurrentFrame(currentFrame+1);
+	}
+	void rewind()
+	{
+		setCurrentFrame(currentFrame-1);
+	}
 	void changeActiveVariable();
 	void setAlpha(float al);
 	void setClipped(bool cl)
@@ -126,6 +138,15 @@ public:
 		return m_colorVBO;
 	}
 
+	int getFramesCount(){
+		return nframes;
+	}
+	int getCurrentFrame(){
+		return currentFrame;
+	}
+	int* getFramePointer(){
+			return &currentFrame;
+		}
 	void *getCudaPosVBO()              const
 	{
 		return (void *)m_cudaPosVBO;
@@ -294,7 +315,7 @@ protected: // data
 
 	dataframe frames[MAX_ITERATIONS];//pointers to data of each frame//calloc?
 
-	int nframes=0;
+
 
 	//following are used for current frame:
 	float * xArray;
@@ -303,6 +324,8 @@ protected: // data
 	float * temp;
 	float * pressureArray;
 	velocity * velArray;
+	int nframes=0;
+	int currentFrame=0;
 
 	int tamMax;
 	float xmax,ymax,zmax;

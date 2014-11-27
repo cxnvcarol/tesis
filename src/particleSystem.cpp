@@ -42,10 +42,10 @@ void ParticleSystem::setFileSource(string filePath) {
 	_initialize(m_numParticles);
 }
 
-ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize,
+ParticleSystem::ParticleSystem(uint3 gridSize,
 		bool bUseOpenGL) :
 				m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(
-						numParticles), m_hPos(0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(
+						0), m_hPos(0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(
 								gridSize), m_timer(NULL), m_solverIterations(1), alpha(1), clipped(
 										false), currentVariable(0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(0) {
 	colorRangeMode=COLOR_GRADIENT;
@@ -87,7 +87,7 @@ ParticleSystem::ParticleSystem(uint numParticles, uint3 gridSize,
 	m_params.globalDamping = 1.0f;
 	m_params.rangeColor = 255;
 
-	_initialize(numParticles);
+	//_initialize(numParticles);
 
 	//initDefaultData();
 }
@@ -299,7 +299,40 @@ void ParticleSystem::setAlpha(float al) {
 
 	updateColor();
 }
+void ParticleSystem::updateFrame()
+{
 
+	if(currentFrame>=nframes)
+		currentFrame=nframes-1;//avoid invalid frame value
+	else if(currentFrame<0)
+		currentFrame=0;
+	//TODO update current variables and update color!
+	//just before:
+
+	printf("\old frame:\npressArray:: *p:%f,p:%d,&p:%d",*pressureArray,pressureArray,&pressureArray);
+	fflush(stdout);
+	printf("\new frame: %d\npressure:: ",currentFrame);
+	fflush(stdout);
+	//printf("frameTempPointer:: *p:%f",*(frames[currentFrame].pressurePointer));
+	//fflush(stdout);
+	printf(",p:%d",frames[currentFrame].pressurePointer);
+	fflush(stdout);
+	printf(",&p:%d",&(frames[currentFrame].pressurePointer));
+	fflush(stdout);
+	velArray=frames[currentFrame].velocityPointer;
+	pressureArray=frames[currentFrame].pressurePointer;
+	temp=frames[currentFrame].temperaturePointer;
+	printf("\nframe changed to: %d\n",currentFrame);
+	fflush(stdout);
+	updateColor();
+
+
+}
+void ParticleSystem::setCurrentFrame(int newframe)
+{
+	currentFrame=newframe;
+	updateFrame();
+}
 void ParticleSystem::updateColor() {
 	//TODO switch case for every variable - should be a global variable so this is done for active variable!
 	//use paramMax and paramMin values to the scale of color
@@ -598,12 +631,8 @@ void ParticleSystem::loadSimulationData(string fileP) {
 				if(time!=lasttime)
 				{
 					lasttime=time;
-					dataframe newFrame=frames[nframes-1];
-					newFrame.time=time;
-					nframes++;
-					if(tam>tamMax)
-						tamMax=tam;
-					tam=0;
+					frames[nframes].time=time;
+
 					temp = (float*) malloc(MAX_CELLS * sizeof(float));
 					pressureArray = (float*) malloc(MAX_CELLS * sizeof(float));
 
@@ -611,10 +640,15 @@ void ParticleSystem::loadSimulationData(string fileP) {
 
 					printf("\npp:%d  *pp:%f   &pp:%d\n",pressureArray,*pressureArray,&pressureArray);
 
-					newFrame.pressurePointer=pressureArray;
-					newFrame.temperaturePointer=temp;
+					frames[nframes].pressurePointer=pressureArray;
+					frames[nframes].temperaturePointer=temp;
+					frames[nframes].velocityPointer=velArray;
 					//TODO here I assumed that coordinates order is the same in each frame. Check it out!!
 
+					nframes++;
+					if(tam>tamMax)
+						tamMax=tam;
+					tam=0;
 					printf("new time: %f;  nframes: %d",time,nframes);
 
 				}
@@ -667,6 +701,10 @@ void ParticleSystem::loadSimulationData(string fileP) {
 		zArray[tam] = posZ;
 		temp[tam] = temperature;
 		pressureArray[tam] = pressure;
+		velArray[tam].direction[0]=velX;
+		velArray[tam].direction[1]=velY;
+		velArray[tam].direction[2]=velZ;
+		velArray[tam].magnitude=velMag;
 		//cout<<temp[tam];
 		tam++;
 		//		try{//skip data to accelerate rendering
@@ -681,7 +719,12 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	}
 	if(tam>tamMax)
 		tamMax=tam;//last time read
-	//TODO assign pointers of temp and pressureArray to the first one of *frames
+
+	currentFrame=0;
+	velArray=frames[currentFrame].velocityPointer;
+	pressureArray=frames[currentFrame].pressurePointer;
+	temp=frames[currentFrame].temperaturePointer;
+
 	xMaxAllowed = max(fabsf(xmax), fabsf(xmin));
 	yMaxAllowed = max(fabsf(ymax), fabsf(ymin));
 	zMaxAllowed = max(fabsf(zmax), fabsf(zmin));
