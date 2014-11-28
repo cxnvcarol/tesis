@@ -52,6 +52,8 @@
 
 #include "paramgl.h"
 
+#define DEFAULT_COLOR_CONFIG "./colores.config"
+
 #define MAX_EPSILON_ERROR 5.00f
 #define THRESHOLD         0.30f
 
@@ -68,7 +70,7 @@ float camera_trans_lag[] = { 0, 0, -3 };
 float camera_rot_lag[] = { 0, 0, 0 };
 const float inertia = 0.1f;
 //ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
-ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS;//important!!
+ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS; //important!!
 
 int mode = 0;
 bool displayEnabled = true;
@@ -130,120 +132,96 @@ extern "C" void cudaGLInit(int argc, char **argv);
 extern "C" void copyArrayFromDevice(void *host, const void *device,
 		unsigned int vbo, int size);
 
-void colorConfig(string configFilePath)
-{
-	if(configFilePath.empty())
-	{
+void colorConfig(string configFilePath) {
+	if (configFilePath.empty()) {
 		psystem->setColorRangeMode(psystem->COLOR_GRADIENT);
-		psystem->setColorInitialGradient(new float[3]{1,1,0});
-		psystem->setColorFinalGradient(new float[3]{1,0,0});
-	}
-	else{
+		psystem->setColorInitialGradient(new float[3] { 1, 1, 0 });
+		psystem->setColorFinalGradient(new float[3] { 1, 0, 0 });
+	} else {
 		std::ifstream data(configFilePath.c_str());
 
 		std::string line;
 
 		std::cout << line << "\n";
-		int nlines=0;
+		int nlines = 0;
 		while (std::getline(data, line)) {
 
 			std::istringstream is_line(line);
 			std::string key;
-			if( std::getline(is_line, key, '=') )
-			{
+			if (std::getline(is_line, key, '=')) {
 				std::string value;
-				if( std::getline(is_line, value) )
-				{
-					std::cout<<key<<"::"<< value<<"\n";
+				if (std::getline(is_line, value)) {
+					std::cout << key << "::" << value << "\n";
 
 				}
-				if(key.find("colormode")!=-1)
-				{
+				if (key.find("colormode") != -1) {
 
 					//posX = (float) ::atof(cell.c_str());
-					if(value.find("gradient")!=-1)
-					{
+					if (value.find("gradient") != -1) {
 						printf("gradient!!!");
 						psystem->setColorRangeMode(psystem->COLOR_GRADIENT);
-					}
-					else if(value.find("short_rainbow")!=-1)
-					{
-						psystem->setColorRangeMode(psystem->COLOR_SHORT_RAINBOW);
-					}
-					else if(value.find("full_rainbow")!=-1)
-					{
+					} else if (value.find("short_rainbow") != -1) {
+						psystem->setColorRangeMode(
+								psystem->COLOR_SHORT_RAINBOW);
+					} else if (value.find("full_rainbow") != -1) {
 						psystem->setColorRangeMode(psystem->COLOR_FULL_RAINBOW);
 					}
-				}
-				else if(key.find("color")!=-1)
-				{
-					const char* str=value.c_str();
-					char *token, *strpos = const_cast<char*>(str);;
+				} else if (key.find("color") != -1) {
+					const char* str = value.c_str();
+					char *token, *strpos = const_cast<char*>(str);
+					;
 
-					float *newcolor=(float*)calloc(3,sizeof(float));
+					float *newcolor = (float*) calloc(3, sizeof(float));
 					for (int var = 0; var < 3; ++var) {
-						token=strsep(&strpos,",");
-						newcolor[var]=(float) ::atof(token);
+						token = strsep(&strpos, ",");
+						newcolor[var] = (float) ::atof(token);
 
 					}
 
-					if(key.find("color1")!=-1)
-					{
+					if (key.find("color1") != -1) {
 						printf("color1!");
 						psystem->setColorInitialGradient(newcolor);
 					}
 
-					else if(key.find("color2")!=-1)
-					{
+					else if (key.find("color2") != -1) {
 						printf("color2!");
 						psystem->setColorFinalGradient(newcolor);
-					}
-					else if(key.find("color+")!=-1)
-					{
+					} else if (key.find("color+") != -1) {
 						printf("color+!");
 						psystem->setColorWarningHigh(newcolor);
-					}
-					else if(key.find("color-")!=-1)
-					{
+					} else if (key.find("color-") != -1) {
 						printf("color-!");
 						psystem->setColorWarningLow(newcolor);
 					}
 				}
 
-				else if(key.find("minNormal")!=-1)
-				{
-					float valor=(float) ::atof(value.c_str());
-					if(key.find("Temperature")!=-1)
-					{
-						psystem->setNormalLow(ParticleSystem::VAR_TEMPERATURE,valor);
+				else if (key.find("minNormal") != -1) {
+					float valor = (float) ::atof(value.c_str());
+					if (key.find("Temperature") != -1) {
+						psystem->setNormalLow(ParticleSystem::VAR_TEMPERATURE,
+								valor);
 
-					}
-					else if(key.find("Pressure")!=-1)
-					{
-						psystem->setNormalLow(ParticleSystem::VAR_PRESSURE,valor);
+					} else if (key.find("Pressure") != -1) {
+						psystem->setNormalLow(ParticleSystem::VAR_PRESSURE,
+								valor);
 
+					} else if (key.find("Velocity") != -1) {
+						psystem->setNormalLow(ParticleSystem::VAR_VELOCITY,
+								valor);
 					}
-					else if(key.find("Velocity")!=-1)
-					{
-						psystem->setNormalLow(ParticleSystem::VAR_VELOCITY,valor);
-					}
-				}
-				else if(key.find("maxNormal")!=-1)
-				{
-					float valor=(float) ::atof(value.c_str());
-					if(key.find("Temperature")!=-1)
-					{
-						psystem->setNormalHigh(ParticleSystem::VAR_TEMPERATURE,valor);
+				} else if (key.find("maxNormal") != -1) {
+					float valor = (float) ::atof(value.c_str());
+					if (key.find("Temperature") != -1) {
+						psystem->setNormalHigh(ParticleSystem::VAR_TEMPERATURE,
+								valor);
 
-					}
-					else if(key.find("Pressure")!=-1)
-					{
-						psystem->setNormalHigh(ParticleSystem::VAR_PRESSURE,valor);
+					} else if (key.find("Pressure") != -1) {
+						psystem->setNormalHigh(ParticleSystem::VAR_PRESSURE,
+								valor);
 
-					}
-					else if(key.find("Velocity")!=-1)
-					{
-						psystem->setNormalHigh(ParticleSystem::VAR_VELOCITY,valor);
+					} else if (key.find("Velocity") != -1) {
+						psystem->setNormalHigh(ParticleSystem::VAR_VELOCITY,
+								valor);
 					}
 
 				}
@@ -252,22 +230,18 @@ void colorConfig(string configFilePath)
 			nlines++;
 		}
 
-
 	}
 
 }
 void initSimulationSystem(uint3 gridSize, bool bUseOpenGL, string filePath) {
 	psystem = new ParticleSystem(gridSize, bUseOpenGL);
 
-
-	if(filePath.empty())
+	if (filePath.empty())
 		psystem->setFileSource(DATAFILE_PATH);
-	else{
-		try{
+	else {
+		try {
 			psystem->setFileSource(filePath);
-		}
-		catch(int ex)
-		{
+		} catch (int ex) {
 			psystem->setFileSource(DATAFILE_PATH);
 		}
 	}
@@ -315,7 +289,7 @@ void initGL(int *argc, char **argv) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0);
-	glClearColor(0.2, 0.2, 0.2, 1.0);//TODO should be in colores.config
+	glClearColor(0.2, 0.2, 0.2, 1.0); //TODO should be in colores.config
 
 	//enable alpha for simulation points
 	glEnable(GL_BLEND);
@@ -331,8 +305,7 @@ void computeFPS() {
 	if (fpsCount == fpsLimit) {
 		char fps[256];
 		float ifps = 1.f / (sdkGetAverageTimerValue(&timer) / 1000.f);
-		sprintf(fps, "Xplotion simulation: %3.1f fps",
-				ifps);
+		sprintf(fps, "Xplotion simulation: %3.1f fps", ifps);
 
 		glutSetWindowTitle(fps);
 		fpsCount = 0;
@@ -342,38 +315,35 @@ void computeFPS() {
 	}
 }
 
-
-void glArrayBox(float w,float h,float d)
-{
-
+void glArrayBox(float w, float h, float d) {
 
 	glBegin(GL_LINES);
-	glVertex3f( -w/2, -h/2,  d/2 );
-	glVertex3f( -w/2,  h/2,  d/2 );
-	glVertex3f( -w/2,  h/2,  d/2 );
-	glVertex3f( -w/2,  h/2, -d/2 );
-	glVertex3f( -w/2,  h/2, -d/2 );
-	glVertex3f( -w/2, -h/2, -d/2 );
-	glVertex3f( -w/2, -h/2, -d/2 );
-	glVertex3f( -w/2, -h/2,  d/2 );
+	glVertex3f(-w / 2, -h / 2, d / 2);
+	glVertex3f(-w / 2, h / 2, d / 2);
+	glVertex3f(-w / 2, h / 2, d / 2);
+	glVertex3f(-w / 2, h / 2, -d / 2);
+	glVertex3f(-w / 2, h / 2, -d / 2);
+	glVertex3f(-w / 2, -h / 2, -d / 2);
+	glVertex3f(-w / 2, -h / 2, -d / 2);
+	glVertex3f(-w / 2, -h / 2, d / 2);
 
-	glVertex3f( w/2, -h/2,  d/2 );
-	glVertex3f( w/2,  h/2,  d/2 );
-	glVertex3f( w/2,  h/2,  d/2 );
-	glVertex3f( w/2,  h/2, -d/2 );
-	glVertex3f( w/2,  h/2, -d/2 );
-	glVertex3f( w/2, -h/2, -d/2 );
-	glVertex3f( w/2, -h/2, -d/2 );
-	glVertex3f( w/2, -h/2,  d/2 );
+	glVertex3f(w / 2, -h / 2, d / 2);
+	glVertex3f(w / 2, h / 2, d / 2);
+	glVertex3f(w / 2, h / 2, d / 2);
+	glVertex3f(w / 2, h / 2, -d / 2);
+	glVertex3f(w / 2, h / 2, -d / 2);
+	glVertex3f(w / 2, -h / 2, -d / 2);
+	glVertex3f(w / 2, -h / 2, -d / 2);
+	glVertex3f(w / 2, -h / 2, d / 2);
 
-	glVertex3f( -w/2, -h/2,  d/2 );
-	glVertex3f( w/2, -h/2,  d/2 );
-	glVertex3f( -w/2,  h/2,  d/2 );
-	glVertex3f( w/2,  h/2,  d/2 );
-	glVertex3f( -w/2,  h/2, -d/2 );
-	glVertex3f( w/2,  h/2, -d/2 );
-	glVertex3f( -w/2, -h/2, -d/2 );
-	glVertex3f( w/2, -h/2, -d/2 );
+	glVertex3f(-w / 2, -h / 2, d / 2);
+	glVertex3f(w / 2, -h / 2, d / 2);
+	glVertex3f(-w / 2, h / 2, d / 2);
+	glVertex3f(w / 2, h / 2, d / 2);
+	glVertex3f(-w / 2, h / 2, -d / 2);
+	glVertex3f(w / 2, h / 2, -d / 2);
+	glVertex3f(-w / 2, -h / 2, -d / 2);
+	glVertex3f(w / 2, -h / 2, -d / 2);
 
 	glEnd();
 }
@@ -385,9 +355,8 @@ void paintCollider() {
 	glColor3f(1.0, 0.0, 0.0);
 	//glutWireCube(psystem->getSelectXSize());
 	//glScalef(5, 1, 1);
-	float3 tamSel=psystem->getSelectSize();
-	glArrayBox(tamSel.x,tamSel.y,tamSel.z);
-
+	float3 tamSel = psystem->getSelectSize();
+	glArrayBox(tamSel.x, tamSel.y, tamSel.z);
 
 	glPopMatrix();
 
@@ -405,8 +374,6 @@ void display() {
 	// render
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
 	// view transform
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, 0, width, height);
@@ -414,7 +381,7 @@ void display() {
 
 	for (int c = 0; c < 3; ++c) {
 		camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c])
-								* inertia;
+				* inertia;
 		camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
 	}
 
@@ -445,38 +412,38 @@ void display() {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	}
-	{//display slider of player
+	{ //display slider of player
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // invert color
 
-		videoPlayer->Render(0,height-20);
+		videoPlayer->Render(0, height - 20);
 
 		glEnable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	//TODO Wireframe for positioning and comparission of simulations
 	/*
-		glViewport(width/2, 0, width/2, height);
-		glLoadIdentity();
+	 glViewport(width/2, 0, width/2, height);
+	 glLoadIdentity();
 
-		for (int c = 0; c < 3; ++c) {
-			camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c])
+	 for (int c = 0; c < 3; ++c) {
+	 camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c])
 	 * inertia;
-			camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
-		}
+	 camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
+	 }
 
-		glTranslatef(camera_trans_lag[0], camera_trans_lag[1], camera_trans_lag[2]);
-		glRotatef(camera_rot_lag[0], 1.0, 0.0, 0.0);
-		glRotatef(camera_rot_lag[1], 0.0, 1.0, 0.0);
+	 glTranslatef(camera_trans_lag[0], camera_trans_lag[1], camera_trans_lag[2]);
+	 glRotatef(camera_rot_lag[0], 1.0, 0.0, 0.0);
+	 glRotatef(camera_rot_lag[1], 0.0, 1.0, 0.0);
 
-		glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
+	 glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
 
-		// cube
-		glColor3f(1.0, 1.0, 1.0);
-		glutWireCube(2.0);
+	 // cube
+	 glColor3f(1.0, 1.0, 1.0);
+	 glutWireCube(2.0);
 
-		// collider
-		paintCollider();
+	 // collider
+	 paintCollider();
 	 */
 
 	sdkStopTimer(&timer);
@@ -505,8 +472,8 @@ void addSphere() {
 }
 
 void reshape(int w, int h) {
-	width=w;
-	height=h;
+	width = w;
+	height = h;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(60.0, (float) w / (float) h, 0.1, 100.0);
@@ -545,9 +512,9 @@ void mouse(int button, int state, int x, int y) {
 	demoMode = false;
 	idleCounter = 0;
 
-	int last=psystem->getCurrentFrame();
-	videoPlayer->Mouse(x,y,button,state);
-	if(last!=psystem->getCurrentFrame()){
+	int last = psystem->getCurrentFrame();
+	videoPlayer->Mouse(x, y, button, state);
+	if (last != psystem->getCurrentFrame()) {
 		psystem->updateFrame();
 
 	}
@@ -557,7 +524,6 @@ void mouse(int button, int state, int x, int y) {
 			return;
 		}
 	}
-
 
 	glutPostRedisplay();
 }
@@ -640,7 +606,7 @@ void motion(int x, int y) {
 			p.x += r[0];
 			p.y += r[1];
 			p.z += r[2];
-		} else if (buttonState == 2) {//shift
+		} else if (buttonState == 2) { //shift
 			float v[3], r[3];
 			v[0] = 0.0f;
 			v[1] = 0.0f;
@@ -649,9 +615,8 @@ void motion(int x, int y) {
 			p.x += r[0];
 			p.y += r[1];
 			p.z += r[2];
-		}
-		else if(buttonState==3)//ctrl
-		{
+		} else if (buttonState == 3) //ctrl
+				{
 			//escala la caja de seleccion
 			float v[3], r[3];
 			v[0] = dx * translateSpeed;
@@ -660,20 +625,23 @@ void motion(int x, int y) {
 			ixform(v, r, modelView);
 
 			//TODO no tiene en cuenta la direccion del arrastre con respecto a la posicion de la caja. De espaldas escala diferente a atras en perspectiva
-			float3 tamSel=psystem->getSelectSize();
-			tamSel.x+=r[0];
-			if(tamSel.x<0.01)tamSel.x=0.01;
-			tamSel.y+=r[1];
-			if(tamSel.y<0.01)tamSel.y=0.01;
-			tamSel.z+=r[2];
-			if(tamSel.z<0.01)tamSel.z=0.01;
+			float3 tamSel = psystem->getSelectSize();
+			tamSel.x += r[0];
+			if (tamSel.x < 0.01)
+				tamSel.x = 0.01;
+			tamSel.y += r[1];
+			if (tamSel.y < 0.01)
+				tamSel.y = 0.01;
+			tamSel.z += r[2];
+			if (tamSel.z < 0.01)
+				tamSel.z = 0.01;
 			psystem->setSelectedSize(tamSel);
 
 		}
 
 		psystem->setColliderPos(p);
 	}
-	break;
+		break;
 	}
 
 	ox = x;
@@ -701,15 +669,12 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 	case 'l':
 		//printf("\nframe::%d\n",psystem->getCurrentFrame());
 		psystem->changeActiveVariable();
-		if(psystem->currentVariable==ParticleSystem::VAR_VELOCITY)
-		{
+		if (psystem->currentVariable == ParticleSystem::VAR_VELOCITY) {
 			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA_VEL);
-			displayMode=ParticleRenderer::PARTICLE_ARROWS;
-		}
-		else if(psystem->currentVariable==0)
-		{
+			displayMode = ParticleRenderer::PARTICLE_ARROWS;
+		} else if (psystem->currentVariable == 0) {
 			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
-			displayMode=ParticleRenderer::PARTICLE_SPHERES;
+			displayMode = ParticleRenderer::PARTICLE_SPHERES;
 		}
 		//TODO case of velocity
 		break;
@@ -808,7 +773,7 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 
 		psystem->addSphere(0, posw, velw, ballr, pr * 2.0f);
 	}
-	break;
+		break;
 
 	case 'd':
 		displaySliders = !displaySliders;
@@ -896,9 +861,12 @@ void initParams() {
 	}
 
 	//create videoplayer
-	videoPlayer=new ParamListGL("videoplayer");
-	printf("total frames: %d\n\n",psystem->getFramesCount());
-	videoPlayer->AddParam(new Param<int>("frame playing",psystem->getCurrentFrame(),0,psystem->getFramesCount()+1,1,psystem->getFramePointer()));
+	videoPlayer = new ParamListGL("videoplayer");
+	printf("total frames: %d\n\n", psystem->getFramesCount());
+	videoPlayer->AddParam(
+			new Param<int>("frame playing", psystem->getCurrentFrame(), 0,
+					psystem->getFramesCount() + 1, 1,
+					psystem->getFramePointer()));
 }
 
 void mainMenu(int i) {
@@ -949,9 +917,7 @@ int main(int argc, char **argv) {
 			fpsLimit = frameCheckNumber;
 			numIterations = 1;
 		}
-	}
-	else if(argc>0)
-	{
+	} else if (argc > 0) {
 		printf("1 argument!!");
 	}
 
@@ -960,7 +926,7 @@ int main(int argc, char **argv) {
 			gridSize.z, gridSize.x * gridSize.y * gridSize.z);
 
 	bool benchmark = checkCmdLineFlag(argc, (const char **) argv, "benchmark")
-							!= 0;
+			!= 0;
 
 	if (checkCmdLineFlag(argc, (const char **) argv, "i")) {
 		numIterations = getCmdLineArgumentInt(argc, (const char **) argv, "i");
@@ -983,25 +949,25 @@ int main(int argc, char **argv) {
 		cudaGLInit(argc, argv);
 	}
 
-
 	if (checkCmdLineFlag(argc, (const char **) argv, "datafile")) {
 		char* pth;
-		getCmdLineArgumentString(argc, (const char **) argv, "datafile",&pth);
+		getCmdLineArgumentString(argc, (const char **) argv, "datafile", &pth);
 		fflush(stdout);
 
-		printf("datafile: %s\n",pth);
+		printf("datafile: %s\n", pth);
 		fflush(stdout);
 		cin.get();
 		initSimulationSystem(gridSize, true, pth);
-	}
-	else
+	} else
 		initSimulationSystem(gridSize, true, DATAFILE_PATH);
-
 
 	if (checkCmdLineFlag(argc, (const char **) argv, "colorconfig")) {
 		char* pth;
-		getCmdLineArgumentString(argc, (const char **) argv, "colorconfig",&pth);
+		getCmdLineArgumentString(argc, (const char **) argv, "colorconfig",
+				&pth);
 		colorConfig(pth);
+	} else {
+		colorConfig (DEFAULT_COLOR_CONFIG);
 	}
 
 	initParams();
@@ -1021,7 +987,6 @@ int main(int argc, char **argv) {
 	glutCloseFunc(cleanup);
 
 	glutMainLoop();
-
 
 	if (psystem) {
 		delete psystem;

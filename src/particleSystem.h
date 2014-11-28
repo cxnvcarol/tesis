@@ -122,11 +122,13 @@ public:
 	}
 	void setColorWarningHigh(float* fini) {
 		highColor = fini;
+		printf("\nhighcolor: (%f,%f,%f)\n",fini[0],fini[1],fini[2]);
 		updateColor();
 
 	}
 	void setColorWarningLow(float* fini) {
 		lowColor = fini;
+		printf("\nlowcolor: (%f,%f,%f)\n",fini[0],fini[1],fini[2]);
 		updateColor();
 
 	}

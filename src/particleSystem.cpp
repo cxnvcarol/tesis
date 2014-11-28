@@ -126,26 +126,85 @@ void ParticleSystem::colorVariable(int index, float *r) {
 
 void ParticleSystem::colorVar(int index, float *r) {
 
-	/*
-	 float cini[3]={0,0,0};
-	 float cfin[3]={1,1,1};
-	 */
-
 	//if(colorRangeMode==COLOR_GRADIENT)//{do this... } else {.. too (for now)} //TODO!
-	float *cini = gradientInitialColor;
-	float *cfin = gradientFinalColor;
+	float *cini;// = gradientInitialColor;
+	float *cfin;// = gradientFinalColor;
+
+
 
 	float varNorm = 0; //in [0,1]
+	int range=1;
 
 	switch (currentVariable) {
 	case VAR_TEMPERATURE:
-		varNorm = (temp[index] - tmin) / (tmax - tmin);
+		if(temp[index]>=n_tmin&&temp[index]<=n_tmax)
+			{
+			varNorm = (temp[index] - n_tmin) / (n_tmax - n_tmin);
+			range=1;
+			}
+		else if(temp[index]<n_tmin)
+			{
+			varNorm = (temp[index] - tmin) / (n_tmin - tmin);
+			range=0;
+			}
+		else if(temp[index]>n_tmax)
+			{
+			varNorm = (temp[index] - n_tmax) / (tmax - n_tmax);
+			range=2;
+			}
 		break;
 	case VAR_PRESSURE:
-		varNorm = (pressureArray[index] - pmin) / (pmax - pmin);
+		//varNorm = (pressureArray[index] - pmin) / (pmax - pmin);
+		if(pressureArray[index]>=n_pmin&&pressureArray[index]<=n_pmax)
+		{
+			varNorm = (pressureArray[index] - n_pmin) / (n_pmax - n_pmin);
+			range=1;
+		}
+		else if(pressureArray[index]<n_pmin)
+		{
+			varNorm = (pressureArray[index] - pmin) / (n_pmin - pmin);
+			range=0;
+		}
+		else if(pressureArray[index]>n_pmax)
+		{
+			varNorm = (pressureArray[index] - n_pmax) / (pmax - n_pmax);
+			range=2;
+		}
+
 		break;
 	case VAR_VELOCITY:
-		varNorm=velArray[index].magnitude/vmax;
+		//varNorm=velArray[index].magnitude/vmax;
+		if(velArray[index].magnitude>=n_vmin&&velArray[index].magnitude<=n_vmax)
+		{
+			varNorm = (velArray[index].magnitude - n_vmin) / (n_vmax - n_vmin);
+			range=1;
+		}
+		else if(velArray[index].magnitude<n_vmin)
+		{
+			varNorm = (velArray[index].magnitude - vmin) / (n_vmin - vmin);
+			range=0;
+		}
+		else if(velArray[index].magnitude>n_pmax)
+		{
+			varNorm = (velArray[index].magnitude - n_vmax) / (vmax - n_vmax);
+			range=2;
+		}
+	}
+
+	switch(range)
+	{
+	case 0:
+		cini=lowColor;
+		cfin=gradientInitialColor;
+		break;
+	case 1:
+		cini=gradientInitialColor;
+		cfin=gradientFinalColor;
+		break;
+	case 2:
+		cini=gradientFinalColor;
+		cfin=highColor;
+		break;
 	}
 
 	float difr = cfin[0] - cini[0];
