@@ -28,6 +28,7 @@ const char *vertexShader = STRINGIFY(
     gl_Position = gl_ModelViewProjectionMatrix * vec4(gl_Vertex.xyz, 1.0);
 
     gl_FrontColor = gl_Color;
+    //gl_FrontColor = vec4(0,1,0,1);
 }
                            );
 
@@ -47,9 +48,34 @@ const char *spherePixelShader = STRINGIFY(
     N.z = sqrt(1.0-mag);
 //
 //    // calculate lighting
-//    //float diffuse = max(0.0, dot(lightDir, N));
+    //float diffuse = max(0.0, dot(lightDir, N));
 //    float diffuse=1;
 
     gl_FragColor = gl_Color;//*diffuse;//diffuse=1
+    //gl_FragColor = vec4(0,1,0,1);
+
 }
-                                );
+);
+const char *vertexArrowShader=STRINGIFY(
+	void main()
+	{
+	gl_FrontColor = vec4(0,1,0,1);
+	//gl_FrontColor = gl_Color;
+	gl_Position = gl_ModelViewProjectionMatrix * vec4(gl_Vertex.xyz, 1.0);
+
+	}
+);
+const char *fragmentArrowShader=STRINGIFY(
+	void main()
+	{
+
+	gl_FrontColor = gl_Color;
+	//gl_FragColor=vec4(0,1,0,1);
+	}
+);
+const char *geometryArrowShader=STRINGIFY(
+	void main()
+	{
+
+	}
+);

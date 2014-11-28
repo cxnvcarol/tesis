@@ -1,5 +1,5 @@
 /*
-// * Copyright 1993-2014 NVIDIA Corporation.  All rights reserved.
+ // * Copyright 1993-2014 NVIDIA Corporation.  All rights reserved.
  *
  * Please refer to the NVIDIA end user license agreement (EULA) associated
  * with this source code for terms and conditions that govern your use of
@@ -42,16 +42,16 @@ void ParticleSystem::setFileSource(string filePath) {
 	_initialize(m_numParticles);
 }
 
-ParticleSystem::ParticleSystem(uint3 gridSize,
-		bool bUseOpenGL) :
-				m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(
-						0), m_hPos(0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(
-								gridSize), m_timer(NULL), m_solverIterations(1), alpha(1), clipped(
-										false), currentVariable(0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(0) {
-	colorRangeMode=COLOR_GRADIENT;
+ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
+		m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(0), m_hPos(
+				0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(gridSize), m_timer(
+				NULL), m_solverIterations(1), alpha(1), clipped(false), currentVariable(
+				0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(
+				0) {
+	colorRangeMode = COLOR_GRADIENT;
 
-	gradientInitialColor=new float[3]{1,1,0};//{1,1,0};//yellow default
-	gradientFinalColor=new float[3]{1,0,0};//{1,0,0};//red default
+	gradientInitialColor = new float[3] { 1, 1, 0 }; //{1,1,0};//yellow default
+	gradientFinalColor = new float[3] { 1, 0, 0 }; //{1,0,0};//red default
 
 	m_numGridCells = m_gridSize.x * m_gridSize.y * m_gridSize.z;
 	//    float3 worldSize = make_float3(2.0f, 2.0f, 2.0f);
@@ -64,13 +64,13 @@ ParticleSystem::ParticleSystem(uint3 gridSize,
 	m_params.numBodies = m_numParticles;
 
 	//TODO set radius with intelligence
-	m_params.particleRadius = 1.0f / 640.0f*3;
+	m_params.particleRadius = 1.0f / 640.0f * 3;
 
 	//m_params.particleRadius = 1.0f / 64000.0f;
 	m_params.colliderPos = make_float3(-1.2f, -0.8f, 0.8f);
 	m_params.colliderRadius = 0.2f;
 
-	m_params.selectSize =make_float3(0.4f,0.4f,0.4f);
+	m_params.selectSize = make_float3(0.4f, 0.4f, 0.4f);
 
 	m_params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
 	//    m_params.cellSize = make_float3(worldSize.x / m_gridSize.x, worldSize.y / m_gridSize.y, worldSize.z / m_gridSize.z);
@@ -110,7 +110,6 @@ inline float lerp(float a, float b, float t) {
 	return a + t * (b - a);
 }
 
-
 void ParticleSystem::colorVariable(int index, float *r) {
 
 	if (currentVariable == VAR_TEMPERATURE) {
@@ -128,59 +127,56 @@ void ParticleSystem::colorVariable(int index, float *r) {
 void ParticleSystem::colorVar(int index, float *r) {
 
 	/*
-	float cini[3]={0,0,0};
-	float cfin[3]={1,1,1};
+	 float cini[3]={0,0,0};
+	 float cfin[3]={1,1,1};
 	 */
 
 	//if(colorRangeMode==COLOR_GRADIENT)//{do this... } else {.. too (for now)} //TODO!
-	float *cini=gradientInitialColor;
-	float *cfin=gradientFinalColor;
+	float *cini = gradientInitialColor;
+	float *cfin = gradientFinalColor;
 
-	float varNorm=0;//in [0,1]
+	float varNorm = 0; //in [0,1]
 
-	switch(currentVariable)
-	{
+	switch (currentVariable) {
 	case VAR_TEMPERATURE:
 		varNorm = (temp[index] - tmin) / (tmax - tmin);
 		break;
 	case VAR_PRESSURE:
 		varNorm = (pressureArray[index] - pmin) / (pmax - pmin);
 		break;
+	case VAR_VELOCITY:
+		varNorm=velArray[index].magnitude/vmax;
 	}
 
-	float difr=cfin[0]-cini[0];
-	float difg=cfin[1]-cini[1];
-	float difb=cfin[2]-cini[2];
+	float difr = cfin[0] - cini[0];
+	float difg = cfin[1] - cini[1];
+	float difb = cfin[2] - cini[2];
 
+	float varPrima = varNorm;
+	float colorMin = cini[0];
+	if (difr < 0) {
+		difr = -difr;
+		varPrima = 1 - varPrima;
+		colorMin = cfin[0];
+	}
+	r[0] = varPrima * difr + colorMin;
+	varPrima = varNorm;
+	colorMin = cini[1];
+	if (difg < 0) {
+		difg = -difg;
+		varPrima = 1 - varPrima;
+		colorMin = cfin[1];
+	}
+	r[1] = varPrima * difg + colorMin;
 
-	float varPrima=varNorm;
-	float colorMin=cini[0];
-	if(difr<0)
-	{
-		difr=-difr;
-		varPrima=1-varPrima;
-		colorMin=cfin[0];
+	varPrima = varNorm;
+	colorMin = cini[2];
+	if (difr < 0) {
+		difb = -difb;
+		varPrima = 1 - varPrima;
+		colorMin = cfin[2];
 	}
-	r[0]=varPrima*difr+colorMin;
-	varPrima=varNorm;
-	colorMin=cini[1];
-	if(difg<0)
-	{
-		difg=-difg;
-		varPrima=1-varPrima;
-		colorMin=cfin[1];
-	}
-	r[1]=varPrima*difg+colorMin;
-
-	varPrima=varNorm;
-	colorMin=cini[2];
-	if(difr<0)
-	{
-		difb=-difb;
-		varPrima=1-varPrima;
-		colorMin=cfin[2];
-	}
-	r[2]=varPrima*difb+colorMin;
+	r[2] = varPrima * difb + colorMin;
 }
 
 void colorRamp(float t, float *r) {
@@ -203,10 +199,12 @@ void ParticleSystem::_initialize(int numParticles) {
 
 	m_numParticles = numParticles;
 
-	m_histogram=new uint[m_numberHistogramIntervals];
+	m_histogram = new uint[m_numberHistogramIntervals];
 	// allocate host storage
-	m_hPos = new float[m_numParticles * 4];
+	m_hPos = new float[m_numParticles * 8];
+	m_hPosVel = new float[m_numParticles * 8];//starting and end point
 	m_hVel = new float[m_numParticles * 4];
+	memset(m_hPosVel, 0, m_numParticles * 8 * sizeof(float));
 	memset(m_hPos, 0, m_numParticles * 4 * sizeof(float));
 	memset(m_hVel, 0, m_numParticles * 4 * sizeof(float));
 
@@ -220,7 +218,8 @@ void ParticleSystem::_initialize(int numParticles) {
 	unsigned int memSize = sizeof(float) * 4 * m_numParticles;
 
 	if (m_bUseOpenGL) {
-		m_posVbo = createVBO(memSize);
+		//m_posVbo = createVBO(memSize);
+		m_posVbo = createVBO(memSize*2);
 		registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
 	} else {
 		checkCudaErrors(cudaMalloc((void ** )&m_cudaPosVBO, memSize));
@@ -241,9 +240,11 @@ void ParticleSystem::_initialize(int numParticles) {
 
 	if (m_bUseOpenGL) {
 		m_colorVBO = createVBO(m_numParticles * 4 * sizeof(float));
+		m_colorVBO_vect = createVBO(m_numParticles * 8 * sizeof(float));
 		m_pressureColor = createVBO(m_numParticles * 4 * sizeof(float));
 		m_temperatureColor = createVBO(m_numParticles * 4 * sizeof(float));
 		registerGLBufferObject(m_colorVBO, &m_cuda_colorvbo_resource);
+		registerGLBufferObject(m_colorVBO_vect, &m_cuda_colorvbo_vect_resource);
 		initialSimulationColor();
 	} else {
 		checkCudaErrors(
@@ -275,7 +276,7 @@ void ParticleSystem::initialSimulationColor() {
 		float t = i / (float) m_numParticles;
 
 		if (m_numParticles > 1)
-			colorVar(i, ptr);//colorVariable(i, ptr);
+			colorVar(i, ptr);	//colorVariable(i, ptr);
 		else
 			colorRamp(t, ptr);		//here is the color initialization
 		ptr += 3;
@@ -299,38 +300,35 @@ void ParticleSystem::setAlpha(float al) {
 
 	updateColor();
 }
-void ParticleSystem::updateFrame()
-{
+void ParticleSystem::updateFrame() {
 
-	if(currentFrame>=nframes)
-		currentFrame=nframes-1;//avoid invalid frame value
-	else if(currentFrame<0)
-		currentFrame=0;
-	//TODO update current variables and update color!
+	if (currentFrame >= nframes)
+		currentFrame = nframes - 1;		//avoid invalid frame value
+	else if (currentFrame < 0)
+		currentFrame = 0;
 	//just before:
 
-	printf("\old frame:\npressArray:: *p:%f,p:%d,&p:%d",*pressureArray,pressureArray,&pressureArray);
+	printf("\old frame:\npressArray:: *p:%f,p:%d,&p:%d", *pressureArray,
+			pressureArray, &pressureArray);
 	fflush(stdout);
-	printf("\new frame: %d\npressure:: ",currentFrame);
+	printf("\new frame: %d\npressure:: ", currentFrame);
 	fflush(stdout);
 	//printf("frameTempPointer:: *p:%f",*(frames[currentFrame].pressurePointer));
 	//fflush(stdout);
-	printf(",p:%d",frames[currentFrame].pressurePointer);
+	printf(",p:%d", frames[currentFrame].pressurePointer);
 	fflush(stdout);
-	printf(",&p:%d",&(frames[currentFrame].pressurePointer));
+	printf(",&p:%d", &(frames[currentFrame].pressurePointer));
 	fflush(stdout);
-	velArray=frames[currentFrame].velocityPointer;
-	pressureArray=frames[currentFrame].pressurePointer;
-	temp=frames[currentFrame].temperaturePointer;
-	printf("\nframe changed to: %d\n",currentFrame);
+	velArray = frames[currentFrame].velocityPointer;
+	pressureArray = frames[currentFrame].pressurePointer;
+	temp = frames[currentFrame].temperaturePointer;
+	printf("\nframe changed to: %d\n", currentFrame);
 	fflush(stdout);
 	updateColor();
 
-
 }
-void ParticleSystem::setCurrentFrame(int newframe)
-{
-	currentFrame=newframe;
+void ParticleSystem::setCurrentFrame(int newframe) {
+	currentFrame = newframe;
 	updateFrame();
 }
 void ParticleSystem::updateColor() {
@@ -345,15 +343,13 @@ void ParticleSystem::updateColor() {
 	if (!clipped) {
 		for (uint i = 0; i < m_numParticles; i++) {
 
-			colorVar(i, ptr);//colorVariable(i, ptr);
+			colorVar(i, ptr);	//colorVariable(i, ptr);
 			ptr += 3;
 			*ptr++ = alpha;
 		}
 	} else {
-		float3 leftDownBack = m_params.colliderPos
-				- m_params.selectSize/2;
-		float3 rightUpFront = m_params.colliderPos
-				+ m_params.selectSize/2;
+		float3 leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
+		float3 rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
 
 		for (uint i = 0; i < m_numParticles; i++) {
 			if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
@@ -361,12 +357,59 @@ void ParticleSystem::updateColor() {
 					&& m_hPos[i * 4 + 1] < rightUpFront.y
 					&& m_hPos[i * 4 + 2] > leftDownBack.z
 					&& m_hPos[i * 4 + 2] < rightUpFront.z) {
-				colorVar(i, ptr);//colorVariable(i, ptr);
+				colorVar(i, ptr);	//colorVariable(i, ptr);
 				ptr += 3;
 				*ptr++ = alpha;
 			} else {
 				ptr += 3;
 				*ptr++ = 0;
+			}
+		}
+	}
+	glUnmapBufferARB(GL_ARRAY_BUFFER);
+
+	updateColorVect();
+}
+
+void ParticleSystem::updateColorVect() {
+	//TODO switch case for every variable - should be a global variable so this is done for active variable!
+	//use paramMax and paramMin values to the scale of color
+
+	// fill color buffer
+	glBindBufferARB(GL_ARRAY_BUFFER, m_colorVBO_vect);
+	float *data = (float *) glMapBufferARB(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	float *ptr = data;
+
+	if (!clipped) {
+		for (uint i = 0; i < m_numParticles; i++) {
+
+			for (int i2 = 0; i2 < 2; ++i2) {
+				colorVar(i, ptr);	//colorVariable(i, ptr);
+							ptr += 3;
+							*ptr++ = alpha;
+			}
+
+		}
+	} else {
+		float3 leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
+		float3 rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+
+		for (uint i = 0; i < m_numParticles; i++) {
+			if (m_hPos[i * 8] > leftDownBack.x && m_hPos[i * 8] < rightUpFront.x
+					&& m_hPos[i * 8 + 1] > leftDownBack.y
+					&& m_hPos[i * 8 + 1] < rightUpFront.y
+					&& m_hPos[i * 8 + 2] > leftDownBack.z
+					&& m_hPos[i * 8 + 2] < rightUpFront.z) {
+				for (int i2 = 0; i2 < 2; ++i2) {
+				colorVar(i, ptr);	//colorVariable(i, ptr);
+				ptr += 3;
+				*ptr++ = alpha;
+				}
+			} else {
+				for (int i2 = 0; i2 < 2; ++i2) {
+				ptr += 3;
+				*ptr++ = 0;
+				}
 			}
 		}
 	}
@@ -378,13 +421,17 @@ void ParticleSystem::changeActiveVariable() {
 	//Only fixed are x,y,z,vx,vy,vz... anything else could be even calculated
 	//TODO Another probem is the velocity variables... keep in mind!!
 
+	printf("\nchangeVarIni: Hasta ahora en 504999 v=%f\n",velArray[504999]);
 	fflush(stdout);
 	int comp = (int) _NUM_VARIABLES;
 	printf("comp: %d", comp);
 	currentVariable = (currentVariable < (comp - 1)) ? currentVariable + 1 : 0;
 	printf("current:%d, numvars:%d", currentVariable, comp);
 
+	printf("\nchangeVarfin: Hasta ahora en 504999 v=%f\n",velArray[504999]);
 	updateColor();
+	printf("\nchangevarafter: Hasta ahora en 504999 v=%f\n",velArray[504999]);
+
 }
 
 void ParticleSystem::_finalize() {
@@ -408,6 +455,7 @@ void ParticleSystem::_finalize() {
 		unregisterGLBufferObject(m_cuda_posvbo_resource);
 		glDeleteBuffers(1, (const GLuint *) &m_posVbo);
 		glDeleteBuffers(1, (const GLuint *) &m_colorVBO);
+		glDeleteBuffers(1, (const GLuint *) &m_colorVBO_vect);
 	} else {
 		checkCudaErrors(cudaFree(m_cudaPosVBO));
 		checkCudaErrors(cudaFree(m_cudaColorVBO));
@@ -534,8 +582,20 @@ void ParticleSystem::setArray(ParticleArray array, const float *data, int start,
 			registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
 		}
 	}
-	break;
+		break;
 
+	case POSITION_VEL:
+	{//TODO is the same as positioin, but it should use a different vector
+		if (m_bUseOpenGL) {
+					unregisterGLBufferObject(m_cuda_posvbo_resource);
+					glBindBuffer(GL_ARRAY_BUFFER, m_posVbo);
+					glBufferSubData(GL_ARRAY_BUFFER, start * 4 * sizeof(float),
+							count * 4 * sizeof(float), data);
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+					registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
+				}
+			}
+		break;
 	case VELOCITY:
 		copyArrayToDevice(m_dVel, data, start * 4 * sizeof(float),
 				count * 4 * sizeof(float));
@@ -575,30 +635,29 @@ void ParticleSystem::initGrid(uint *size, float spacing, float jitter,
 	}
 }
 
-//TODO Refactor to generalize
+//TODO Refactor to generalize for more variables
 void ParticleSystem::loadSimulationData(string fileP) {
 	printf("iniciaCarga");
 	cout << fileP;
 	fflush(stdout);
-
 
 	xArray = (float*) malloc(MAX_CELLS * sizeof(float));
 	yArray = (float*) malloc(MAX_CELLS * sizeof(float));
 	zArray = (float*) malloc(MAX_CELLS * sizeof(float));
 
 	float pressure, temperature, velMag, velX, velY, velZ, time, posX, posY,
-	posZ;
+			posZ;
 	string wall;
 	xmax = 0, ymax = 0, zmax = 0, xmin = 0, ymin = 0, zmin = 0;
-	tmin = MAX_INT, tmax = -MAX_INT, pmin = MAX_INT, pmax = -MAX_INT;
+	tmin = MAX_INT, tmax = -MAX_INT, pmin = MAX_INT, pmax = -MAX_INT, vmax =-MAX_INT, vmin=MAX_INT;
 
 	std::ifstream data(fileP.c_str());
 
 	std::string line;
 	getline(data, line);    //skip first row
 	std::cout << line << "\n";
-	float lasttime=-1;
-	int tam=0;
+	float lasttime = -1;
+	int tam = 0;
 	while (std::getline(data, line)) {
 		if (tam < 2)
 			std::cout << line << "\n";
@@ -615,41 +674,41 @@ void ParticleSystem::loadSimulationData(string fileP) {
 				temperature = (float) ::atof(cell.c_str());
 				break;
 			case 3:
-				velMag=(float)::atof(cell.c_str());
+				velMag = (float) ::atof(cell.c_str());
 				break;
 			case 4:
-				velX=(float)::atof(cell.c_str());
+				velX = (float) ::atof(cell.c_str());
 				break;
 			case 5:
-				velY=(float)::atof(cell.c_str());
+				velY = (float) ::atof(cell.c_str());
 				break;
 			case 6:
-				velZ=(float)::atof(cell.c_str());
+				velZ = (float) ::atof(cell.c_str());
 				break;
 			case 7:
-				time=(float)::atof(cell.c_str());
-				if(time!=lasttime)
-				{
-					lasttime=time;
-					frames[nframes].time=time;
+				time = (float) ::atof(cell.c_str());
+				if (time != lasttime) {
+					lasttime = time;
+					frames[nframes].time = time;
 
 					temp = (float*) malloc(MAX_CELLS * sizeof(float));
 					pressureArray = (float*) malloc(MAX_CELLS * sizeof(float));
 
-					velArray=(velocity*)malloc(MAX_CELLS*sizeof(velocity));
+					velArray = (velocity*) malloc(MAX_CELLS * sizeof(velocity));
 
-					printf("\npp:%d  *pp:%f   &pp:%d\n",pressureArray,*pressureArray,&pressureArray);
+					printf("\npp:%d  *pp:%f   &pp:%d\n", pressureArray,
+							*pressureArray, &pressureArray);
 
-					frames[nframes].pressurePointer=pressureArray;
-					frames[nframes].temperaturePointer=temp;
-					frames[nframes].velocityPointer=velArray;
+					frames[nframes].pressurePointer = pressureArray;
+					frames[nframes].temperaturePointer = temp;
+					frames[nframes].velocityPointer = velArray;
 					//TODO here I assumed that coordinates order is the same in each frame. Check it out!!
 
 					nframes++;
-					if(tam>tamMax)
-						tamMax=tam;
-					tam=0;
-					printf("new time: %f;  nframes: %d",time,nframes);
+					if (tam > tamMax)
+						tamMax = tam;
+					tam = 0;
+					printf("new time: %f;  nframes: %d", time, nframes);
 
 				}
 				break;
@@ -680,6 +739,17 @@ void ParticleSystem::loadSimulationData(string fileP) {
 		if (pressure < pmin)
 			pmin = pressure;
 
+		if (velMag > vmax)
+			{
+			vmax = velMag;
+			//std::cout << line << " <= maxvel\n";
+			}
+		else if(velMag<vmin)
+			{
+			vmin=velMag;
+			//std::cout << line << " <= minvel\n";
+			}
+
 		//...
 		if (posX > xmax)
 			xmax = posX;
@@ -701,10 +771,10 @@ void ParticleSystem::loadSimulationData(string fileP) {
 		zArray[tam] = posZ;
 		temp[tam] = temperature;
 		pressureArray[tam] = pressure;
-		velArray[tam].direction[0]=velX;
-		velArray[tam].direction[1]=velY;
-		velArray[tam].direction[2]=velZ;
-		velArray[tam].magnitude=velMag;
+		velArray[tam].direction[0] = velX;
+		velArray[tam].direction[1] = velY;
+		velArray[tam].direction[2] = velZ;
+		velArray[tam].magnitude = velMag;
 		//cout<<temp[tam];
 		tam++;
 		//		try{//skip data to accelerate rendering
@@ -717,25 +787,25 @@ void ParticleSystem::loadSimulationData(string fileP) {
 		//
 		//		}
 	}
-	if(tam>tamMax)
-		tamMax=tam;//last time read
+	if (tam > tamMax)
+		tamMax = tam;		//last time read
 
-	currentFrame=0;
-	velArray=frames[currentFrame].velocityPointer;
-	pressureArray=frames[currentFrame].pressurePointer;
-	temp=frames[currentFrame].temperaturePointer;
+	currentFrame = 0;
+	velArray = frames[currentFrame].velocityPointer;
+	pressureArray = frames[currentFrame].pressurePointer;
+	temp = frames[currentFrame].temperaturePointer;
 
 	xMaxAllowed = max(fabsf(xmax), fabsf(xmin));
 	yMaxAllowed = max(fabsf(ymax), fabsf(ymin));
 	zMaxAllowed = max(fabsf(zmax), fabsf(zmin));
-	printf("\ntam: %d\ntmax:%f;tmin:%f\npmax:%f;pmin:%f\n...\n", tam, tmax,
-			tmin, pmax, pmin);
+	printf("\ntam: %d\ntmax:%f;tmin:%f\npmax:%f;pmin:%f;vmax:%f;vmin:%f\n...\n", tam, tmax,
+			tmin, pmax, pmin,vmax,vmin);
 
 	printf("\nafter: xmax: %f, ymax: %f, zmax: %f", xmax, ymax, zmax);
 	printf("after: xmin: %f, ymin: %f, zmin: %f", xmin, ymin, zmin);
 	printf("\n xmall: %f, ymall: %f, zmall: %f\n", xMaxAllowed, yMaxAllowed,
 			zMaxAllowed);
-
+	printf("\nJust assigned: Hasta ahora en 504999 v=%f",velArray[504999]);
 	fflush(stdout);
 }
 
@@ -774,7 +844,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 		}
 
 	}
-	break;
+		break;
 
 	case CONFIG_GRID: {
 		float jitter = m_params.particleRadius;
@@ -784,7 +854,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 		initGrid(gridSize, m_params.particleRadius * 2.0f, jitter,
 				m_numParticles);
 	}
-	break;
+		break;
 	case CONFIG_SIMULATION_DATA: {
 		int p = 0, v = 0;
 		printf("xmall: %f, ymall: %f, zmall: %f", xMaxAllowed, yMaxAllowed,
@@ -798,21 +868,14 @@ void ParticleSystem::reset(ParticleConfig config) {
 
 			for (i = 0; i < m_numParticles; i++) {
 				float point[3];
-				//TODO should I resize the points?? then should I save {x,y,z}Array?
-				point[0] = (xArray[i]) / (maxTotal);
+
+				point[0] = (xArray[i]) / (maxTotal);//scaled to fit into pre-stablished cube
 				point[1] = (yArray[i]) / (maxTotal);
 				point[2] = (zArray[i]) / (maxTotal);
 				m_hPos[p++] = point[0];
 				m_hPos[p++] = point[1];
 				m_hPos[p++] = point[2];
 				m_hPos[p++] = 1.0f; // radius
-				m_hVel[v++] = 0.0f;
-				m_hVel[v++] = 0.0f;
-				m_hVel[v++] = 0.0f;
-				m_hVel[v++] = 0.0f;
-				maxF < point[0] ?
-						maxF = point[0] :
-						(min > point[0] ? min = point[0] : min);
 			}
 			printf("vizcaya:  Maxtotal: %f\n", maxTotal);
 
@@ -822,7 +885,76 @@ void ParticleSystem::reset(ParticleConfig config) {
 		}
 
 	}
-	break;
+		break;
+
+	case CONFIG_SIMULATION_DATA_VEL: {
+		int p = 0;
+			float maxTotal = max(xMaxAllowed, max(yMaxAllowed, zMaxAllowed));
+
+			try {
+				uint i = 0;
+
+				for (i = 0; i < m_numParticles; i++) {
+					float point[3], point2[3];
+
+					point[0] = (xArray[i]) / (maxTotal);//scaled to fit into pre-stablished cube
+					point[1] = (yArray[i]) / (maxTotal);
+					point[2] = (zArray[i]) / (maxTotal);
+					if(i==504999)
+						printf("\njustBefore:Hasta ahora en 504999 v=%f\n",velArray[504999]);
+					//calculateSecondPoint(point,point2,i);
+					{
+						float dirx=velArray[i].direction[0];
+						 float diry=velArray[i].direction[1];
+						 float dirz=velArray[i].direction[2];
+						 //TODO Afinar factor
+						 float scaleFactor=m_params.particleRadius*50/vmax;//TODO test this number
+						 if(velArray[i].magnitude>=vmax*0.9)
+							 {
+							 printf("el mas rapido es el index: %d con v=%f\n",i,velArray[504999].magnitude);
+							 point2[0]=point[0]+dirx*scaleFactor;
+							 						 point2[1]=point[1]+dirx*scaleFactor;
+							 						 point2[2]=point[2]+dirx*scaleFactor;
+							 }
+
+						 else{
+							 point2[0]=point[0];
+							 point2[1]=point[1];
+							 point2[2]=point[2];
+							 point2[0]=point[0]+dirx*scaleFactor;
+							 							 						 point2[1]=point[1]+dirx*scaleFactor;
+							 							 						 point2[2]=point[2]+dirx*scaleFactor;
+						 }
+					}
+					if(i==504999)
+						printf("\njustAfter:Hasta ahora en 504999 v=%f\n",velArray[504999]);
+					m_hPos[p++] = point[0];
+					m_hPos[p++] = point[1];
+					m_hPos[p++] = point[2];
+					m_hPos[p++] = 1.0f; // radius
+					m_hPos[p++] = point2[0];
+					m_hPos[p++] = point2[1];
+					m_hPos[p++] = point2[2];
+					m_hPos[p++] = 1.0f; // radius
+					if(i==1700000)
+						printf("\njustAfterHPos+1:Hasta ahora en 504999 v=%f\n",velArray[504999]);
+				}
+				printf("\nendingForConfig:Hasta ahora en 504999 v=%f\n",velArray[504999]);
+				velArray=frames[currentFrame].velocityPointer;
+				printf("\nnowWhat:Hasta ahora en 504999 v=%f\n",velArray[504999]);
+
+			} catch (const std::exception &exc) {
+				// catch anything thrown within try block that derives from std::exception
+				std::cerr << exc.what();
+			}
+			setArray(POSITION, m_hPos, 0, m_numParticles*2);
+			printf("velocidades!!");
+				fflush(stdout);
+				return;
+
+		}
+
+			break;
 	}
 
 	printf("\ncoordXmax: %f, coordXmin: %f\n", maxF, min);
@@ -832,19 +964,41 @@ void ParticleSystem::reset(ParticleConfig config) {
 	printf("vamoos!!");
 	fflush(stdout);
 }
+void ParticleSystem::calculateSecondPoint(float *p1,float *p2,int index)
+{
+ float dirx=velArray[index].direction[0];
+ float diry=velArray[index].direction[1];
+ float dirz=velArray[index].direction[2];
 
-void ParticleSystem::histogramFunc(int ind){
+ if(velArray[index].magnitude==vmax)
+	 {
+	 printf("el mas rapido es el index: %d con v=%f\n",index,velArray[504999].magnitude);
+	 }
+ if(index==504999)
+ {
+	 printf("\nel mas rapido estaba en el 504999 y ahora es v=%f\n",velArray[index]);
+	 printf("\nchecking 504999: Hasta ahora en 504999 v=%f\n",velArray[504999]);
+ }
+ float scaleFactor=m_params.particleRadius*500/vmax;//TODO test this number
+ p2[0]=p1[0]+dirx*scaleFactor;
+ p2[1]=p1[1]+dirx*scaleFactor;
+ p2[2]=p1[2]+dirx*scaleFactor;
+
+}
+void ParticleSystem::histogramFunc(int ind) {
 
 	int index;
-	switch(currentVariable)
-	{
+	switch (currentVariable) {
 	case VAR_PRESSURE:
-		index=(int)((pressureArray[ind]-minLocalVar)/width_histogram);
+		index = (int) ((pressureArray[ind] - minLocalVar) / width_histogram);
 		m_histogram[index]++;
 		break;
 	case VAR_TEMPERATURE:
-		index=(int)((temp[ind]-minLocalVar)/width_histogram);
+		index = (int) ((temp[ind] - minLocalVar) / width_histogram);
 		m_histogram[index]++;
+		break;
+	case VAR_VELOCITY:
+		//TODO
 		break;
 	}
 
@@ -853,53 +1007,57 @@ void ParticleSystem::histogramFunc(int ind){
 void ParticleSystem::generateHistogram() {
 
 	for (int var = 0; var < m_numberHistogramIntervals; ++var) {
-		m_histogram[var]=0;
+		m_histogram[var] = 0;
 	}
 
 	if (!clipped) {
 		//update mix-max local:
-		minLocalVar=currentVariable==VAR_TEMPERATURE?tmin:pmin;
-		maxLocalVar=currentVariable==VAR_TEMPERATURE?tmax:pmax;
+		minLocalVar = currentVariable == VAR_TEMPERATURE ? tmin : pmin;
+		maxLocalVar = currentVariable == VAR_TEMPERATURE ? tmax : pmax;
 
-		width_histogram=maxLocalVar-minLocalVar;
-		width_histogram=width_histogram/m_numberHistogramIntervals;
+		width_histogram = maxLocalVar - minLocalVar;
+		width_histogram = width_histogram / m_numberHistogramIntervals;
 		for (uint i = 0; i < m_numParticles; i++) {
 
 			histogramFunc(i);
 		}
 	} else {
-		float3 leftDownBack = m_params.colliderPos
-				- m_params.selectSize/2;
-		float3 rightUpFront = m_params.colliderPos
-				+ m_params.selectSize/2;
+		float3 leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
+		float3 rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
 
 		//update min-max local
 
-		maxLocalVar=-MAX_INT;
-		minLocalVar=MAX_INT;
+		maxLocalVar = -MAX_INT;
+		minLocalVar = MAX_INT;
 		for (uint i = 0; i < m_numParticles; i++) {
 			if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
 					&& m_hPos[i * 4 + 1] > leftDownBack.y
 					&& m_hPos[i * 4 + 1] < rightUpFront.y
 					&& m_hPos[i * 4 + 2] > leftDownBack.z
 					&& m_hPos[i * 4 + 2] < rightUpFront.z) {
-				switch(currentVariable)
-				{
+				switch (currentVariable) {
 				case VAR_TEMPERATURE:
-					if(temp[i]<minLocalVar) minLocalVar=temp[i];
-					else if(temp[i]>maxLocalVar) maxLocalVar=temp[i];
+					if (temp[i] < minLocalVar)
+						minLocalVar = temp[i];
+					else if (temp[i] > maxLocalVar)
+						maxLocalVar = temp[i];
 					break;
 				case VAR_PRESSURE:
-					if(pressureArray[i]<minLocalVar) minLocalVar=pressureArray[i];
-					else if(pressureArray[i]>maxLocalVar) maxLocalVar=pressureArray[i];
+					if (pressureArray[i] < minLocalVar)
+						minLocalVar = pressureArray[i];
+					else if (pressureArray[i] > maxLocalVar)
+						maxLocalVar = pressureArray[i];
+					break;
+				case VAR_VELOCITY:
+					//TODO
 					break;
 				}
 			}
 		}
 		//end update min-max
 
-		width_histogram=maxLocalVar-minLocalVar;
-		width_histogram=width_histogram/m_numberHistogramIntervals;
+		width_histogram = maxLocalVar - minLocalVar;
+		width_histogram = width_histogram / m_numberHistogramIntervals;
 		for (uint i = 0; i < m_numParticles; i++) {
 			if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
 					&& m_hPos[i * 4 + 1] > leftDownBack.y
@@ -910,20 +1068,20 @@ void ParticleSystem::generateHistogram() {
 			}
 		}
 	}
-	printf("minLocal:%f, maxLocal:%f\n\n",minLocalVar,maxLocalVar);
+	printf("minLocal:%f, maxLocal:%f\n\n", minLocalVar, maxLocalVar);
 
-	FILE * myfile=fopen("histog.dat","w");
+	FILE * myfile = fopen("histog.dat", "w");
 
-
-
-	int totalHist=0;
+	int totalHist = 0;
 	for (int var = 0; var < m_numberHistogramIntervals; ++var) {
-		totalHist+=m_histogram[var];
-		printf("%f,%d\n",minLocalVar+var*width_histogram,m_histogram[var]);
+		totalHist += m_histogram[var];
+		printf("%f,%d\n", minLocalVar + var * width_histogram,
+				m_histogram[var]);
 		//myfile << "Writing this to a file.\n";
-		fprintf(myfile,"%f,%d\n",minLocalVar+var*width_histogram,m_histogram[var]);
+		fprintf(myfile, "%f,%d\n", minLocalVar + var * width_histogram,
+				m_histogram[var]);
 	}
-	printf("\n\ntotal cuenta: %d",totalHist);
+	printf("\n\ntotal cuenta: %d", totalHist);
 	fclose(myfile);
 
 }

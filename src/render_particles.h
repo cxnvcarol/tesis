@@ -24,11 +24,16 @@ class ParticleRenderer
         {
             m_colorVBO = vbo;
         }
+        void setColorVectBuffer(unsigned int vbo)
+                {
+                    m_colorVBO_vect = vbo;
+                }
 
         enum DisplayMode
         {
             PARTICLE_POINTS,
             PARTICLE_SPHERES,
+            PARTICLE_ARROWS,
             PARTICLE_NUM_MODES
         };
 
@@ -56,7 +61,8 @@ class ParticleRenderer
     protected: // methods
         void _initGL();
         void _drawPoints();
-        GLuint _compileProgram(const char *vsource, const char *fsource);
+        void _drawArrows();
+        GLuint _compileProgram(const char *vsource, const char *fsource, const char *gsource);
 
     protected: // data
         float *m_pos;
@@ -68,9 +74,11 @@ class ParticleRenderer
         int m_window_w, m_window_h;
 
         GLuint m_program;
+        GLuint m_programVectorial;
 
         GLuint m_vbo;
         GLuint m_colorVBO;
+        GLuint m_colorVBO_vect;
 };
 
 #endif //__ RENDER_PARTICLES__

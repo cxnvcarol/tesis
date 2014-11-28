@@ -28,8 +28,10 @@ ParticleRenderer::ParticleRenderer()
       m_pointSize(1.0f),
       m_particleRadius(0.125f * 0.5f),
       m_program(0),
+      m_programVectorial(0),
       m_vbo(0),
-      m_colorVBO(0)
+      m_colorVBO(0),
+      m_colorVBO_vect(0)
 {
     _initGL();
 }
@@ -39,7 +41,7 @@ ParticleRenderer::~ParticleRenderer()
     m_pos = 0;
 }
 
-void ParticleRenderer::setPositions(float *pos, int numParticles)
+void ParticleRenderer::setPositions(float *pos, int numParticles)//don't use!
 {
     m_pos = pos;
     m_numParticles = numParticles;
@@ -54,7 +56,7 @@ void ParticleRenderer::setVertexBuffer(unsigned int vbo, int numParticles)
 void ParticleRenderer::_drawPoints()
 {
     if (!m_vbo)
-    {
+	{
         glBegin(GL_POINTS);
         {
             int k = 0;
@@ -74,21 +76,46 @@ void ParticleRenderer::_drawPoints()
         glEnableClientState(GL_VERTEX_ARRAY);
 
 
-        //TODO here switch according to variable
         if (m_colorVBO)
         {
             glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_colorVBO);
             glColorPointer(4, GL_FLOAT, 0, 0);
             glEnableClientState(GL_COLOR_ARRAY);
+            //glEnableClientState(GL_NORMAL_ARRAY);
         }
 
+
         glDrawArrays(GL_POINTS, 0, m_numParticles);
+        //glDrawArrays(GL_LINES, 0, m_numParticles);//first aprox for arrows
+
         //glDrawArrays(GL_TRIANGLES, 0, m_numParticles);
 
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
     }
+}
+
+void ParticleRenderer::_drawArrows()
+{
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_vbo);//change for a new vbo with velocities coordinates!
+        glVertexPointer(4, GL_FLOAT, 0, 0);
+        glEnableClientState(GL_VERTEX_ARRAY);
+
+        //enable with new colorvbo of size*2
+
+        if (m_colorVBO_vect)
+        {
+            glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_colorVBO_vect);//change for a doubled sized array
+            glColorPointer(4, GL_FLOAT, 0, 0);
+            glEnableClientState(GL_COLOR_ARRAY);
+        }
+
+
+        glDrawArrays(GL_LINES, 0, m_numParticles*2);////*2 //first aprox for arrows
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
 }
 
 void ParticleRenderer::display(DisplayMode mode /* = PARTICLE_POINTS */)
@@ -120,25 +147,50 @@ void ParticleRenderer::display(DisplayMode mode /* = PARTICLE_POINTS */)
             glUseProgram(0);
             glDisable(GL_POINT_SPRITE_ARB);
             break;
+        case PARTICLE_ARROWS:
+        	glEnable(GL_POINT_SPRITE_ARB);
+        	            glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+        	            glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_NV);
+        	            glDepthMask(GL_TRUE);
+        	            glEnable(GL_DEPTH_TEST);
+        	            glEnable(GL_ALPHA_TEST);
+        	glUseProgram(m_programVectorial);
+
+        	glColor3f(1, 1, 1);
+        	_drawArrows();
+        	glUseProgram(0);
+        	glDisable(GL_POINT_SPRITE_ARB);
+        	break;
     }
 }
 
 GLuint
-ParticleRenderer::_compileProgram(const char *vsource, const char *fsource)
+ParticleRenderer::_compileProgram(const char *vsource, const char *fsource, const char *gsource)
 {
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint geometryShader=glCreateShader(GL_GEOMETRY_SHADER);
 
     glShaderSource(vertexShader, 1, &vsource, 0);
     glShaderSource(fragmentShader, 1, &fsource, 0);
 
+
     glCompileShader(vertexShader);
     glCompileShader(fragmentShader);
+    if(gsource!=NULL)
+        {
+    	glShaderSource(geometryShader, 1, &gsource, 0);
+    	glCompileShader(geometryShader);
+        }
 
     GLuint program = glCreateProgram();
 
     glAttachShader(program, vertexShader);
     glAttachShader(program, fragmentShader);
+    if(gsource!=NULL)
+    {
+    	//glAttachShader(program, geometryShader);
+    }
 
     glLinkProgram(program);
 
@@ -160,7 +212,8 @@ ParticleRenderer::_compileProgram(const char *vsource, const char *fsource)
 
 void ParticleRenderer::_initGL()
 {
-    m_program = _compileProgram(vertexShader, spherePixelShader);
+    m_program = _compileProgram(vertexShader, spherePixelShader,NULL);
+    m_programVectorial = _compileProgram(vertexArrowShader, fragmentArrowShader,geometryArrowShader);
 
 #if !defined(__APPLE__) && !defined(MACOSX)
     glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FALSE);

@@ -67,8 +67,8 @@ float camera_rot[] = { 0, 0, 0 };
 float camera_trans_lag[] = { 0, 0, -3 };
 float camera_rot_lag[] = { 0, 0, 0 };
 const float inertia = 0.1f;
-ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
-//ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS;//important!!
+//ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
+ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS;//important!!
 
 int mode = 0;
 bool displayEnabled = true;
@@ -174,7 +174,6 @@ void colorConfig(string configFilePath)
 					{
 						psystem->setColorRangeMode(psystem->COLOR_FULL_RAINBOW);
 					}
-					//TODO parse to float values and set psystem->...
 				}
 				else if(key.find("color")!=-1)
 				{
@@ -240,6 +239,7 @@ void initSimulationSystem(uint3 gridSize, bool bUseOpenGL, string filePath) {
 		renderer = new ParticleRenderer;
 		renderer->setParticleRadius(psystem->getParticleRadius());
 		renderer->setColorBuffer(psystem->getColorBuffer());
+		renderer->setColorVectBuffer(psystem->getColorVectBuffer());
 	}
 
 	sdkCreateTimer(&timer);
@@ -361,6 +361,9 @@ void display() {
 	renderer->setVertexBuffer(psystem->getCurrentReadBuffer(),
 			psystem->getNumParticles());
 
+	//TODO
+	//set secondvertex buffer: with double size and with second point for each point as the point of arrow.
+	//precalculate in psystem
 	// render
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -413,7 +416,7 @@ void display() {
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	//TODO Testing viewports
+	//TODO Wireframe for positioning and comparission of simulations
 	/*
 		glViewport(width/2, 0, width/2, height);
 		glLoadIdentity();
@@ -660,6 +663,17 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 	case 'l':
 		//printf("\nframe::%d\n",psystem->getCurrentFrame());
 		psystem->changeActiveVariable();
+		if(psystem->currentVariable==ParticleSystem::VAR_VELOCITY)
+			{
+			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA_VEL);
+				displayMode=ParticleRenderer::PARTICLE_ARROWS;
+			}
+		else if(psystem->currentVariable==0)
+		{
+			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
+			displayMode=ParticleRenderer::PARTICLE_SPHERES;
+		}
+		//TODO case of velocity
 		break;
 
 	case 'i':
