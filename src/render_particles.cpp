@@ -170,9 +170,12 @@ ParticleRenderer::_compileProgram(const char *vsource, const char *fsource, cons
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     GLuint geometryShader=glCreateShader(GL_GEOMETRY_SHADER);
+    printf("\nvsource: \n%s\n",vsource);
+        printf("gsource: \n%s\n",gsource);
 
     glShaderSource(vertexShader, 1, &vsource, 0);
     glShaderSource(fragmentShader, 1, &fsource, 0);
+
 
 
     glCompileShader(vertexShader);
@@ -189,7 +192,7 @@ ParticleRenderer::_compileProgram(const char *vsource, const char *fsource, cons
     glAttachShader(program, fragmentShader);
     if(gsource!=NULL)
     {
-    	//glAttachShader(program, geometryShader);
+    	glAttachShader(program, geometryShader);
     }
 
     glLinkProgram(program);

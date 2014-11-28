@@ -382,11 +382,12 @@ void ParticleSystem::updateColorVect() {
 
 	if (!clipped) {
 		for (uint i = 0; i < m_numParticles; i++) {
+			int al=rand()%100;
 
 			for (int i2 = 0; i2 < 2; ++i2) {
 				colorVar(i, ptr);	//colorVariable(i, ptr);
 							ptr += 3;
-							*ptr++ = alpha;
+							*ptr++ = al<2?alpha:0;
 			}
 
 		}
@@ -395,6 +396,7 @@ void ParticleSystem::updateColorVect() {
 		float3 rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
 
 		for (uint i = 0; i < m_numParticles; i++) {
+			int al=rand()%100;
 			if (m_hPos[i * 8] > leftDownBack.x && m_hPos[i * 8] < rightUpFront.x
 					&& m_hPos[i * 8 + 1] > leftDownBack.y
 					&& m_hPos[i * 8 + 1] < rightUpFront.y
@@ -403,7 +405,8 @@ void ParticleSystem::updateColorVect() {
 				for (int i2 = 0; i2 < 2; ++i2) {
 				colorVar(i, ptr);	//colorVariable(i, ptr);
 				ptr += 3;
-				*ptr++ = alpha;
+				//*ptr++ = alpha;
+				*ptr++ = al<2?alpha:0;
 				}
 			} else {
 				for (int i2 = 0; i2 < 2; ++i2) {
@@ -421,16 +424,13 @@ void ParticleSystem::changeActiveVariable() {
 	//Only fixed are x,y,z,vx,vy,vz... anything else could be even calculated
 	//TODO Another probem is the velocity variables... keep in mind!!
 
-	printf("\nchangeVarIni: Hasta ahora en 504999 v=%f\n",velArray[504999]);
 	fflush(stdout);
 	int comp = (int) _NUM_VARIABLES;
 	printf("comp: %d", comp);
 	currentVariable = (currentVariable < (comp - 1)) ? currentVariable + 1 : 0;
 	printf("current:%d, numvars:%d", currentVariable, comp);
 
-	printf("\nchangeVarfin: Hasta ahora en 504999 v=%f\n",velArray[504999]);
 	updateColor();
-	printf("\nchangevarafter: Hasta ahora en 504999 v=%f\n",velArray[504999]);
 
 }
 
@@ -805,7 +805,6 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	printf("after: xmin: %f, ymin: %f, zmin: %f", xmin, ymin, zmin);
 	printf("\n xmall: %f, ymall: %f, zmall: %f\n", xMaxAllowed, yMaxAllowed,
 			zMaxAllowed);
-	printf("\nJust assigned: Hasta ahora en 504999 v=%f",velArray[504999]);
 	fflush(stdout);
 }
 
@@ -900,18 +899,15 @@ void ParticleSystem::reset(ParticleConfig config) {
 					point[0] = (xArray[i]) / (maxTotal);//scaled to fit into pre-stablished cube
 					point[1] = (yArray[i]) / (maxTotal);
 					point[2] = (zArray[i]) / (maxTotal);
-					if(i==504999)
-						printf("\njustBefore:Hasta ahora en 504999 v=%f\n",velArray[504999]);
 					//calculateSecondPoint(point,point2,i);
 					{
 						float dirx=velArray[i].direction[0];
 						 float diry=velArray[i].direction[1];
 						 float dirz=velArray[i].direction[2];
 						 //TODO Afinar factor
-						 float scaleFactor=m_params.particleRadius*50/vmax;//TODO test this number
+						 float scaleFactor=m_params.particleRadius*30/vmax;//TODO test this number
 						 if(velArray[i].magnitude>=vmax*0.9)
 							 {
-							 printf("el mas rapido es el index: %d con v=%f\n",i,velArray[504999].magnitude);
 							 point2[0]=point[0]+dirx*scaleFactor;
 							 						 point2[1]=point[1]+dirx*scaleFactor;
 							 						 point2[2]=point[2]+dirx*scaleFactor;
@@ -926,8 +922,6 @@ void ParticleSystem::reset(ParticleConfig config) {
 							 							 						 point2[2]=point[2]+dirx*scaleFactor;
 						 }
 					}
-					if(i==504999)
-						printf("\njustAfter:Hasta ahora en 504999 v=%f\n",velArray[504999]);
 					m_hPos[p++] = point[0];
 					m_hPos[p++] = point[1];
 					m_hPos[p++] = point[2];
@@ -936,13 +930,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 					m_hPos[p++] = point2[1];
 					m_hPos[p++] = point2[2];
 					m_hPos[p++] = 1.0f; // radius
-					if(i==1700000)
-						printf("\njustAfterHPos+1:Hasta ahora en 504999 v=%f\n",velArray[504999]);
 				}
-				printf("\nendingForConfig:Hasta ahora en 504999 v=%f\n",velArray[504999]);
-				velArray=frames[currentFrame].velocityPointer;
-				printf("\nnowWhat:Hasta ahora en 504999 v=%f\n",velArray[504999]);
-
 			} catch (const std::exception &exc) {
 				// catch anything thrown within try block that derives from std::exception
 				std::cerr << exc.what();
@@ -970,15 +958,6 @@ void ParticleSystem::calculateSecondPoint(float *p1,float *p2,int index)
  float diry=velArray[index].direction[1];
  float dirz=velArray[index].direction[2];
 
- if(velArray[index].magnitude==vmax)
-	 {
-	 printf("el mas rapido es el index: %d con v=%f\n",index,velArray[504999].magnitude);
-	 }
- if(index==504999)
- {
-	 printf("\nel mas rapido estaba en el 504999 y ahora es v=%f\n",velArray[index]);
-	 printf("\nchecking 504999: Hasta ahora en 504999 v=%f\n",velArray[504999]);
- }
  float scaleFactor=m_params.particleRadius*500/vmax;//TODO test this number
  p2[0]=p1[0]+dirx*scaleFactor;
  p2[1]=p1[1]+dirx*scaleFactor;
