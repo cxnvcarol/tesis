@@ -45,6 +45,8 @@ public:
 
 	float* gradientInitialColor = (float*) calloc(3, sizeof(float));
 	float* gradientFinalColor = (float*) calloc(3, sizeof(float));
+	float* highColor = (float*) calloc(3, sizeof(float));
+	float* lowColor = (float*) calloc(3, sizeof(float));
 
 	enum FixedVariables {
 		VAR_TEMPERATURE, VAR_PRESSURE, VAR_VELOCITY, _NUM_VARIABLES
@@ -90,6 +92,16 @@ public:
 		updateColor();
 
 	}
+	void setColorWarningHigh(float* fini) {
+			highColor = fini;
+			updateColor();
+
+		}
+	void setColorWarningLow(float* fini) {
+				lowColor = fini;
+				updateColor();
+
+			}
 
 	void colorTemperature(int t, float* r);
 	void colorVariable(int t, float* r);

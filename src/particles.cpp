@@ -177,36 +177,36 @@ void colorConfig(string configFilePath)
 				}
 				else if(key.find("color")!=-1)
 				{
-					//TODO generalize to include n colors & generate gradient according to that!
+					const char* str=value.c_str();
+					char *token, *strpos = const_cast<char*>(str);;
+
+					float *newcolor=(float*)calloc(3,sizeof(float));
+					for (int var = 0; var < 3; ++var) {
+						token=strsep(&strpos,",");
+						newcolor[var]=(float) ::atof(token);
+
+					}
+
 					if(key.find("color1")!=-1)
 					{
-						const char* str=value.c_str();
-						char *token, *strpos = const_cast<char*>(str);;
-
-						float *newcolor=(float*)calloc(3,sizeof(float));
-						for (int var = 0; var < 3; ++var) {
-							token=strsep(&strpos,",");
-							newcolor[var]=(float) ::atof(token);
-
-						}
+						printf("color1!");
 						psystem->setColorInitialGradient(newcolor);
-						printf("\nnc: %f,%f,%f\n",newcolor[0],newcolor[1],newcolor[2]);
 					}
 
 					else if(key.find("color2")!=-1)
 					{
-						printf("color2!!");
-
-						const char* str=value.c_str();
-						char *token, *strpos = const_cast<char*>(str);;
-
-						float *newcolor=(float*)calloc(3,sizeof(float));
-						for (int var = 0; var < 3; ++var) {
-							token=strsep(&strpos,",");
-							newcolor[var]=(float) ::atof(token);
-
-						}
+						printf("color2!");
 						psystem->setColorFinalGradient(newcolor);
+					}
+					else if(key.find("color+")!=-1)
+					{
+						printf("color+!");
+						psystem->setColorWarningHigh(newcolor);
+					}
+					else if(key.find("color-")!=-1)
+					{
+						printf("color-!");
+						psystem->setColorWarningLow(newcolor);
 					}
 				}
 			}

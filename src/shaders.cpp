@@ -10,6 +10,9 @@
  */
 
 #define STRINGIFY(A) #A
+#define GLSL(version,shader) "#version " #version "\n" #shader
+#define GLSL_GEOM(version,shader) "#version " #version "\n#extension GL_EXT_geometry_shader4 : enable\n" #shader
+
 
 // vertex shader
 const char *vertexShader = STRINGIFY(
@@ -59,23 +62,77 @@ const char *spherePixelShader = STRINGIFY(
 const char *vertexArrowShader=STRINGIFY(
 	void main()
 	{
-	gl_FrontColor = vec4(0,1,0,1);
-	//gl_FrontColor = gl_Color;
+	gl_FrontColor = gl_Color;
 	gl_Position = gl_ModelViewProjectionMatrix * vec4(gl_Vertex.xyz, 1.0);
 
 	}
 );
-const char *fragmentArrowShader=STRINGIFY(
+const char *fragmentArrowShader=GLSL(120,
 	void main()
 	{
 
-	gl_FrontColor = gl_Color;
+	gl_FragColor = gl_Color;
+
+
 	//gl_FragColor=vec4(0,1,0,1);
 	}
 );
-const char *geometryArrowShader=STRINGIFY(
+
+const char *geometryArrowShader=GLSL_GEOM(150,
+
+layout(lines) in;
+layout(line_strip, max_vertices=6) out;
+
 	void main()
 	{
+		for(int i=0; i<2; i++)
+		  {
+		    gl_Position = gl_in[i].gl_Position;
+
+		    gl_FrontColor = gl_FrontColorIn[i];
+
+
+		    EmitVertex();
+
+		  }
+
+		  EndPrimitive();
+
+
+
+		  vec3 a=gl_in[0].gl_Position.xyz;
+		  vec3 b=gl_in[1].gl_Position.xyz;
+		  vec3 t=normalize(cross(a,b))*0.5;
+		  vec3 diff=gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz;
+		  vec3 d=normalize(diff);
+		  vec3 f=normalize(d+t)*0.2*length(diff);
+		  vec3 final=f+b;
+		  {//paint arrowhead  part 1
+		  /*next: inicio es b (=gl_in[1]), final=final*/
+		  gl_Position = gl_in[1].gl_Position;
+		  gl_FrontColor = gl_FrontColorIn[1];
+		  EmitVertex();
+		  gl_Position.xyz = final;
+		  gl_FrontColor = gl_FrontColorIn[1];
+		  EmitVertex();
+
+		  EndPrimitive();
+		  }
+		  {//paint arrowhead  part 2
+		  		  /*next: inicio es b (=gl_in[1]), final=final*/
+
+			  f=normalize(d-t)*0.2*length(diff);
+			  		  final=f+b;
+		  		  gl_Position = gl_in[1].gl_Position;
+		  		  gl_FrontColor = gl_FrontColorIn[1];
+		  		  EmitVertex();
+		  		  gl_Position.xyz = final;
+		  		  gl_FrontColor = gl_FrontColorIn[1];
+		  		  EmitVertex();
+
+		  		  EndPrimitive();
+		  		  }
+
 
 	}
 );
