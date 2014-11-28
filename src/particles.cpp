@@ -209,6 +209,44 @@ void colorConfig(string configFilePath)
 						psystem->setColorWarningLow(newcolor);
 					}
 				}
+
+				else if(key.find("minNormal")!=-1)
+				{
+					float valor=(float) ::atof(value.c_str());
+					if(key.find("Temperature")!=-1)
+					{
+						psystem->setNormalLow(ParticleSystem::VAR_TEMPERATURE,valor);
+
+					}
+					else if(key.find("Pressure")!=-1)
+					{
+						psystem->setNormalLow(ParticleSystem::VAR_PRESSURE,valor);
+
+					}
+					else if(key.find("Velocity")!=-1)
+					{
+						psystem->setNormalLow(ParticleSystem::VAR_VELOCITY,valor);
+					}
+				}
+				else if(key.find("maxNormal")!=-1)
+				{
+					float valor=(float) ::atof(value.c_str());
+					if(key.find("Temperature")!=-1)
+					{
+						psystem->setNormalHigh(ParticleSystem::VAR_TEMPERATURE,valor);
+
+					}
+					else if(key.find("Pressure")!=-1)
+					{
+						psystem->setNormalHigh(ParticleSystem::VAR_PRESSURE,valor);
+
+					}
+					else if(key.find("Velocity")!=-1)
+					{
+						psystem->setNormalHigh(ParticleSystem::VAR_VELOCITY,valor);
+					}
+
+				}
 			}
 
 			nlines++;
@@ -376,7 +414,7 @@ void display() {
 
 	for (int c = 0; c < 3; ++c) {
 		camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c])
-						* inertia;
+								* inertia;
 		camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
 	}
 
@@ -408,13 +446,13 @@ void display() {
 
 	}
 	{//display slider of player
-	glDisable(GL_DEPTH_TEST);
-	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // invert color
+		glDisable(GL_DEPTH_TEST);
+		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO); // invert color
 
-	videoPlayer->Render(0,height-20);
+		videoPlayer->Render(0,height-20);
 
-	glEnable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_DEPTH_TEST);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	//TODO Wireframe for positioning and comparission of simulations
 	/*
@@ -664,10 +702,10 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 		//printf("\nframe::%d\n",psystem->getCurrentFrame());
 		psystem->changeActiveVariable();
 		if(psystem->currentVariable==ParticleSystem::VAR_VELOCITY)
-			{
+		{
 			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA_VEL);
-				displayMode=ParticleRenderer::PARTICLE_ARROWS;
-			}
+			displayMode=ParticleRenderer::PARTICLE_ARROWS;
+		}
 		else if(psystem->currentVariable==0)
 		{
 			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
@@ -922,7 +960,7 @@ int main(int argc, char **argv) {
 			gridSize.z, gridSize.x * gridSize.y * gridSize.z);
 
 	bool benchmark = checkCmdLineFlag(argc, (const char **) argv, "benchmark")
-					!= 0;
+							!= 0;
 
 	if (checkCmdLineFlag(argc, (const char **) argv, "i")) {
 		numIterations = getCmdLineArgumentInt(argc, (const char **) argv, "i");

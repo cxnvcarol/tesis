@@ -43,11 +43,11 @@ void ParticleSystem::setFileSource(string filePath) {
 }
 
 ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
-		m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(0), m_hPos(
-				0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(gridSize), m_timer(
-				NULL), m_solverIterations(1), alpha(1), clipped(false), currentVariable(
-				0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(
-				0) {
+				m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(0), m_hPos(
+						0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(gridSize), m_timer(
+								NULL), m_solverIterations(1), alpha(1), clipped(false), currentVariable(
+										0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(
+												0) {
 	colorRangeMode = COLOR_GRADIENT;
 
 	gradientInitialColor = new float[3] { 1, 1, 0 }; //{1,1,0};//yellow default
@@ -386,8 +386,8 @@ void ParticleSystem::updateColorVect() {
 
 			for (int i2 = 0; i2 < 2; ++i2) {
 				colorVar(i, ptr);	//colorVariable(i, ptr);
-							ptr += 3;
-							*ptr++ = al<2?alpha:0;
+				ptr += 3;
+				*ptr++ = al<2?alpha:0;
 			}
 
 		}
@@ -403,15 +403,15 @@ void ParticleSystem::updateColorVect() {
 					&& m_hPos[i * 8 + 2] > leftDownBack.z
 					&& m_hPos[i * 8 + 2] < rightUpFront.z) {
 				for (int i2 = 0; i2 < 2; ++i2) {
-				colorVar(i, ptr);	//colorVariable(i, ptr);
-				ptr += 3;
-				//*ptr++ = alpha;
-				*ptr++ = al<2?alpha:0;
+					colorVar(i, ptr);	//colorVariable(i, ptr);
+					ptr += 3;
+					//*ptr++ = alpha;
+					*ptr++ = al<2?alpha:0;
 				}
 			} else {
 				for (int i2 = 0; i2 < 2; ++i2) {
-				ptr += 3;
-				*ptr++ = 0;
+					ptr += 3;
+					*ptr++ = 0;
 				}
 			}
 		}
@@ -582,20 +582,20 @@ void ParticleSystem::setArray(ParticleArray array, const float *data, int start,
 			registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
 		}
 	}
-		break;
+	break;
 
 	case POSITION_VEL:
 	{//TODO is the same as positioin, but it should use a different vector
 		if (m_bUseOpenGL) {
-					unregisterGLBufferObject(m_cuda_posvbo_resource);
-					glBindBuffer(GL_ARRAY_BUFFER, m_posVbo);
-					glBufferSubData(GL_ARRAY_BUFFER, start * 4 * sizeof(float),
-							count * 4 * sizeof(float), data);
-					glBindBuffer(GL_ARRAY_BUFFER, 0);
-					registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
-				}
-			}
-		break;
+			unregisterGLBufferObject(m_cuda_posvbo_resource);
+			glBindBuffer(GL_ARRAY_BUFFER, m_posVbo);
+			glBufferSubData(GL_ARRAY_BUFFER, start * 4 * sizeof(float),
+					count * 4 * sizeof(float), data);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
+		}
+	}
+	break;
 	case VELOCITY:
 		copyArrayToDevice(m_dVel, data, start * 4 * sizeof(float),
 				count * 4 * sizeof(float));
@@ -646,7 +646,7 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	zArray = (float*) malloc(MAX_CELLS * sizeof(float));
 
 	float pressure, temperature, velMag, velX, velY, velZ, time, posX, posY,
-			posZ;
+	posZ;
 	string wall;
 	xmax = 0, ymax = 0, zmax = 0, xmin = 0, ymin = 0, zmin = 0;
 	tmin = MAX_INT, tmax = -MAX_INT, pmin = MAX_INT, pmax = -MAX_INT, vmax =-MAX_INT, vmin=MAX_INT;
@@ -740,15 +740,15 @@ void ParticleSystem::loadSimulationData(string fileP) {
 			pmin = pressure;
 
 		if (velMag > vmax)
-			{
+		{
 			vmax = velMag;
 			//std::cout << line << " <= maxvel\n";
-			}
+		}
 		else if(velMag<vmin)
-			{
+		{
 			vmin=velMag;
 			//std::cout << line << " <= minvel\n";
-			}
+		}
 
 		//...
 		if (posX > xmax)
@@ -775,7 +775,6 @@ void ParticleSystem::loadSimulationData(string fileP) {
 		velArray[tam].direction[1] = velY;
 		velArray[tam].direction[2] = velZ;
 		velArray[tam].magnitude = velMag;
-		//cout<<temp[tam];
 		tam++;
 		//		try{//skip data to accelerate rendering
 		//			for (int var = 0; var < 10; ++var) {
@@ -789,6 +788,13 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	}
 	if (tam > tamMax)
 		tamMax = tam;		//last time read
+
+	n_tmin=tmin;
+	n_tmax=tmax;
+	n_pmin=pmin;
+	n_pmax=pmax;
+	n_vmin=vmin;
+	n_vmax=vmax;
 
 	currentFrame = 0;
 	velArray = frames[currentFrame].velocityPointer;
@@ -843,7 +849,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 		}
 
 	}
-		break;
+	break;
 
 	case CONFIG_GRID: {
 		float jitter = m_params.particleRadius;
@@ -853,7 +859,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 		initGrid(gridSize, m_params.particleRadius * 2.0f, jitter,
 				m_numParticles);
 	}
-		break;
+	break;
 	case CONFIG_SIMULATION_DATA: {
 		int p = 0, v = 0;
 		printf("xmall: %f, ymall: %f, zmall: %f", xMaxAllowed, yMaxAllowed,
@@ -884,65 +890,65 @@ void ParticleSystem::reset(ParticleConfig config) {
 		}
 
 	}
-		break;
+	break;
 
 	case CONFIG_SIMULATION_DATA_VEL: {
 		int p = 0;
-			float maxTotal = max(xMaxAllowed, max(yMaxAllowed, zMaxAllowed));
+		float maxTotal = max(xMaxAllowed, max(yMaxAllowed, zMaxAllowed));
 
-			try {
-				uint i = 0;
+		try {
+			uint i = 0;
 
-				for (i = 0; i < m_numParticles; i++) {
-					float point[3], point2[3];
+			for (i = 0; i < m_numParticles; i++) {
+				float point[3], point2[3];
 
-					point[0] = (xArray[i]) / (maxTotal);//scaled to fit into pre-stablished cube
-					point[1] = (yArray[i]) / (maxTotal);
-					point[2] = (zArray[i]) / (maxTotal);
-					//calculateSecondPoint(point,point2,i);
+				point[0] = (xArray[i]) / (maxTotal);//scaled to fit into pre-stablished cube
+				point[1] = (yArray[i]) / (maxTotal);
+				point[2] = (zArray[i]) / (maxTotal);
+				//calculateSecondPoint(point,point2,i);
+				{
+					float dirx=velArray[i].direction[0];
+					float diry=velArray[i].direction[1];
+					float dirz=velArray[i].direction[2];
+					//TODO Afinar factor
+					float scaleFactor=m_params.particleRadius*30/vmax;//TODO test this number
+					if(velArray[i].magnitude>=vmax*0.9)
 					{
-						float dirx=velArray[i].direction[0];
-						 float diry=velArray[i].direction[1];
-						 float dirz=velArray[i].direction[2];
-						 //TODO Afinar factor
-						 float scaleFactor=m_params.particleRadius*30/vmax;//TODO test this number
-						 if(velArray[i].magnitude>=vmax*0.9)
-							 {
-							 point2[0]=point[0]+dirx*scaleFactor;
-							 						 point2[1]=point[1]+dirx*scaleFactor;
-							 						 point2[2]=point[2]+dirx*scaleFactor;
-							 }
-
-						 else{
-							 point2[0]=point[0];
-							 point2[1]=point[1];
-							 point2[2]=point[2];
-							 point2[0]=point[0]+dirx*scaleFactor;
-							 							 						 point2[1]=point[1]+dirx*scaleFactor;
-							 							 						 point2[2]=point[2]+dirx*scaleFactor;
-						 }
+						point2[0]=point[0]+dirx*scaleFactor;
+						point2[1]=point[1]+dirx*scaleFactor;
+						point2[2]=point[2]+dirx*scaleFactor;
 					}
-					m_hPos[p++] = point[0];
-					m_hPos[p++] = point[1];
-					m_hPos[p++] = point[2];
-					m_hPos[p++] = 1.0f; // radius
-					m_hPos[p++] = point2[0];
-					m_hPos[p++] = point2[1];
-					m_hPos[p++] = point2[2];
-					m_hPos[p++] = 1.0f; // radius
+
+					else{
+						point2[0]=point[0];
+						point2[1]=point[1];
+						point2[2]=point[2];
+						point2[0]=point[0]+dirx*scaleFactor;
+						point2[1]=point[1]+dirx*scaleFactor;
+						point2[2]=point[2]+dirx*scaleFactor;
+					}
 				}
-			} catch (const std::exception &exc) {
-				// catch anything thrown within try block that derives from std::exception
-				std::cerr << exc.what();
+				m_hPos[p++] = point[0];
+				m_hPos[p++] = point[1];
+				m_hPos[p++] = point[2];
+				m_hPos[p++] = 1.0f; // radius
+				m_hPos[p++] = point2[0];
+				m_hPos[p++] = point2[1];
+				m_hPos[p++] = point2[2];
+				m_hPos[p++] = 1.0f; // radius
 			}
-			setArray(POSITION, m_hPos, 0, m_numParticles*2);
-			printf("velocidades!!");
-				fflush(stdout);
-				return;
-
+		} catch (const std::exception &exc) {
+			// catch anything thrown within try block that derives from std::exception
+			std::cerr << exc.what();
 		}
+		setArray(POSITION, m_hPos, 0, m_numParticles*2);
+		printf("velocidades!!");
+		fflush(stdout);
+		return;
 
-			break;
+	}
+
+	break;
 	}
 
 	printf("\ncoordXmax: %f, coordXmin: %f\n", maxF, min);
@@ -954,14 +960,14 @@ void ParticleSystem::reset(ParticleConfig config) {
 }
 void ParticleSystem::calculateSecondPoint(float *p1,float *p2,int index)
 {
- float dirx=velArray[index].direction[0];
- float diry=velArray[index].direction[1];
- float dirz=velArray[index].direction[2];
+	float dirx=velArray[index].direction[0];
+	float diry=velArray[index].direction[1];
+	float dirz=velArray[index].direction[2];
 
- float scaleFactor=m_params.particleRadius*500/vmax;//TODO test this number
- p2[0]=p1[0]+dirx*scaleFactor;
- p2[1]=p1[1]+dirx*scaleFactor;
- p2[2]=p1[2]+dirx*scaleFactor;
+	float scaleFactor=m_params.particleRadius*500/vmax;//TODO test this number
+	p2[0]=p1[0]+dirx*scaleFactor;
+	p2[1]=p1[1]+dirx*scaleFactor;
+	p2[2]=p1[2]+dirx*scaleFactor;
 
 }
 void ParticleSystem::histogramFunc(int ind) {

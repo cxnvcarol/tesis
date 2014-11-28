@@ -63,7 +63,7 @@ public:
 		POSITION, VELOCITY,POSITION_VEL
 	};
 
-//TODO quitar después, es temporal
+	//TODO quitar después, es temporal
 	void initialSimulationColor();
 	void updateColor();
 	void updateColorVect();
@@ -80,6 +80,34 @@ public:
 	void setClipped(bool cl) {
 		clipped = cl;
 	}
+	void setNormalHigh(int variable, float th) {
+		switch(variable)
+		{
+		case VAR_TEMPERATURE:
+			n_tmax=th;
+			break;
+		case VAR_PRESSURE:
+			n_pmax=th;
+			break;
+		case VAR_VELOCITY:
+			n_vmax=th;
+			break;
+		}
+	}
+	void setNormalLow(int variable, float th) {
+		switch(variable)
+		{
+		case VAR_TEMPERATURE:
+			n_tmin=th;
+			break;
+		case VAR_PRESSURE:
+			n_pmin=th;
+			break;
+		case VAR_VELOCITY:
+			n_vmin=th;
+			break;
+		}
+	}
 	void setColorRangeMode(int mode) {
 		colorRangeMode = mode;
 	}
@@ -93,15 +121,15 @@ public:
 
 	}
 	void setColorWarningHigh(float* fini) {
-			highColor = fini;
-			updateColor();
+		highColor = fini;
+		updateColor();
 
-		}
+	}
 	void setColorWarningLow(float* fini) {
-				lowColor = fini;
-				updateColor();
+		lowColor = fini;
+		updateColor();
 
-			}
+	}
 
 	void colorTemperature(int t, float* r);
 	void colorVariable(int t, float* r);
@@ -213,7 +241,7 @@ public:
 	void histogramFunc(int index);
 
 protected:
-// methods
+	// methods
 	ParticleSystem() {
 	}
 	uint createVBO(uint size);
@@ -224,11 +252,11 @@ protected:
 	void initGrid(uint *size, float spacing, float jitter, uint numParticles);
 
 protected:
-// data
+	// data
 	bool m_bInitialized, m_bUseOpenGL;
 	uint m_numParticles;
 
-// CPU data
+	// CPU data
 	float *m_hPos;              // particle positions
 	float *m_hPosVel;              // particle positions, starting and end point of arrow
 	float *m_hVel;              // particle velocities
@@ -237,14 +265,14 @@ protected:
 	uint *m_hCellStart;
 	uint *m_hCellEnd;
 
-// GPU data
+	// GPU data
 	float *m_dPos;
 	float *m_dVel;
 
 	float *m_dSortedPos;
 	float *m_dSortedVel;
 
-// grid data for sorting method
+	// grid data for sorting method
 	uint *m_dGridParticleHash; // grid hash value for each particle
 	uint *m_dGridParticleIndex; // particle index for each particle
 	uint *m_dCellStart;        // index of start of each cell in sorted list
@@ -280,7 +308,7 @@ protected:
 		velocity* velocityPointer;
 	};
 
-// params
+	// params
 	SimParams m_params;
 	uint3 m_gridSize;
 	uint m_numGridCells;
@@ -289,12 +317,12 @@ protected:
 
 	uint m_solverIterations;
 
-//custom
+	//custom
 	Model_OBJ obj;
 
 	dataframe frames[MAX_ITERATIONS]; //pointers to data of each frame//calloc?
 
-//following are used for current frame:
+	//following are used for current frame:
 	float * xArray;
 	float * yArray;
 	float * zArray;
@@ -308,7 +336,10 @@ protected:
 	float xmax, ymax, zmax;
 	float xmin, ymin, zmin;
 	float tmin, tmax, pmin, pmax, vmax,vmin;
-	float alpha; //rango normal de 0 a 10
+
+	float n_tmin,n_tmax,n_pmin,n_pmax,n_vmin,n_vmax;
+
+	float alpha; //rango normal de 0 a 1
 	float xMaxAllowed, yMaxAllowed, zMaxAllowed;
 
 };
