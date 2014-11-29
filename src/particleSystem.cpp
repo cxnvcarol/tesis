@@ -41,17 +41,21 @@ void ParticleSystem::advanceCutter()
 	//2.then according to currentcutter and direction forward or advance
 	switch (currentCutter) {
 		case 0:
-			//check cutterX position
-
-			if(forwardDirectionCutter)
-			{
-forwardCutterX();
-			}
-			else{
-
-			}
+			if(cutterX.pos.x>1||cutterX.pos.x<-1) forwardDirectionCutter=!forwardDirectionCutter;
+			if(forwardDirectionCutter) forwardCutterX();
+			else rewindCutterX();
 
 			break;
+		case 1:
+					if(cutterY.pos.y>1||cutterY.pos.y<-1) forwardDirectionCutter=!forwardDirectionCutter;
+					if(forwardDirectionCutter) forwardCutterY();
+					else rewindCutterY();
+
+					break;
+		case 2:
+					if(cutterZ.pos.z>1||cutterZ.pos.z<-1) forwardDirectionCutter=!forwardDirectionCutter;
+					if(forwardDirectionCutter) forwardCutterZ();
+					else rewindCutterZ();
 		default:
 			break;
 	}

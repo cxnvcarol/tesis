@@ -723,6 +723,9 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		psystem->generateHistogram();
 		break;
 
+	case '\r':
+		demoCutting=!demoCutting;
+		break;
 
 
 
@@ -755,12 +758,12 @@ void special(int k, int x, int y) {
 			{
 
 			case GLUT_KEY_UP:
-				psystem->setAlpha(
-						psystem->getAlpha() >= 1 ? 1.0f : psystem->getAlpha() + 0.1f);
+				psystem->forwardDirectionCutter=true;
+				psystem->advanceCutter();
 				break;
 			case GLUT_KEY_DOWN:
-				psystem->setAlpha(
-						psystem->getAlpha() <= 0 ? 0.0f : psystem->getAlpha() - 0.1f);
+				psystem->forwardDirectionCutter=false;
+				psystem->advanceCutter();
 				break;
 			case GLUT_KEY_LEFT:
 				psystem->rewind();
@@ -768,6 +771,25 @@ void special(int k, int x, int y) {
 
 			case GLUT_KEY_RIGHT:
 				psystem->forward();
+				break;
+			case GLUT_KEY_F1:
+				psystem->initCutters();
+				psystem->currentCutter=0;
+				demoCutting=true;
+				break;
+			case GLUT_KEY_F2:
+				psystem->initCutters();
+				psystem->currentCutter=1;
+				demoCutting=true;
+				break;
+			case GLUT_KEY_F3:
+				psystem->initCutters();
+				psystem->currentCutter=2;
+				demoCutting=true;
+				break;
+			case GLUT_KEY_F4:
+				demoCutting=false;
+				psystem->initCutters();
 				break;
 			}
 	}
@@ -798,8 +820,8 @@ void idle(void) {
 		demoCounter++;
 		if (demoCounter++ > 50) {
 
-			//psystem->advanceCutter();
-			psystem->forwardCutterX();
+			psystem->advanceCutter();
+			//psystem->forwardCutterX();
 
 					demoCounter=0;
 		}
