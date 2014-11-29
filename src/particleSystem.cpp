@@ -59,6 +59,7 @@ void ParticleSystem::advanceCutter()
 		default:
 			break;
 	}
+	updateColor();
 }
 	void ParticleSystem::forwardCutterX()
 		{
@@ -128,6 +129,7 @@ ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
 	m_params.selectSize = make_float3(0.4f, 0.4f, 0.4f);
 
 	initCutters();
+	enableCutting=false;
 
 	m_params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
 	//    m_params.cellSize = make_float3(worldSize.x / m_gridSize.x, worldSize.y / m_gridSize.y, worldSize.z / m_gridSize.z);
@@ -176,6 +178,7 @@ void ParticleSystem::initCutters()
 		cutterY.size=make_float3(2,0.05,2);
 		cutterZ.pos=make_float3(0,0,1);
 		cutterZ.size=make_float3(2,2,0.05);
+		enableCutting=true;
 	}
 void ParticleSystem::colorVariable(int index, float *r) {
 
@@ -497,8 +500,33 @@ void ParticleSystem::updateColor() {
 
 		}
 	} else {
-		float3 leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
-		float3 rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+
+		float3 leftDownBack;
+		float3 rightUpFront;
+		if(enableCutting)
+		{
+			switch(currentCutter)
+			{
+			case 0:
+				leftDownBack=cutterX.pos-cutterX.size/2;
+				rightUpFront=cutterX.pos+cutterX.size/2;
+				break;
+			case 1:
+							leftDownBack=cutterY.pos-cutterY.size/2;
+							rightUpFront=cutterY.pos+cutterY.size/2;
+							break;
+			case 2:
+							leftDownBack=cutterZ.pos-cutterZ.size/2;
+							rightUpFront=cutterZ.pos+cutterZ.size/2;
+							break;
+
+			}
+
+		}
+		else{
+			leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
+			rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+		}
 
 		for (uint i = 0; i < m_numParticles; i++) {
 			if (m_hPos[i * 4] > leftDownBack.x && m_hPos[i * 4] < rightUpFront.x
@@ -558,8 +586,32 @@ void ParticleSystem::updateColorVect() {
 
 		}
 	} else {
-		float3 leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
-		float3 rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+		float3 leftDownBack;
+				float3 rightUpFront;
+				if(enableCutting)
+				{
+					switch(currentCutter)
+					{
+					case 0:
+						leftDownBack=cutterX.pos-cutterX.size/2;
+						rightUpFront=cutterX.pos+cutterX.size/2;
+						break;
+					case 1:
+									leftDownBack=cutterY.pos-cutterY.size/2;
+									rightUpFront=cutterY.pos+cutterY.size/2;
+									break;
+					case 2:
+									leftDownBack=cutterZ.pos-cutterZ.size/2;
+									rightUpFront=cutterZ.pos+cutterZ.size/2;
+									break;
+
+					}
+
+				}
+				else{
+					leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
+					rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+				}
 
 		for (uint i = 0; i < m_numParticles; i++) {
 			int al=rand()%100;
@@ -736,33 +788,6 @@ inline float frand() {
 	return rand() / (float) RAND_MAX;
 }
 
-void ParticleSystem::initGrid(uint *size, float spacing, float jitter,
-		uint numParticles) {
-	srand(1973);
-
-	for (uint z = 0; z < size[2]; z++) {
-		for (uint y = 0; y < size[1]; y++) {
-			for (uint x = 0; x < size[0]; x++) {
-				uint i = (z * size[1] * size[0]) + (y * size[0]) + x;
-
-				if (i < numParticles) {
-					m_hPos[i * 4] = (spacing * x) + m_params.particleRadius
-							- 1.0f + (frand() * 2.0f - 1.0f) * jitter;
-					m_hPos[i * 4 + 1] = (spacing * y) + m_params.particleRadius
-							- 1.0f + (frand() * 2.0f - 1.0f) * jitter;
-					m_hPos[i * 4 + 2] = (spacing * z) + m_params.particleRadius
-							- 1.0f + (frand() * 2.0f - 1.0f) * jitter;
-					m_hPos[i * 4 + 3] = 1.0f;
-
-					m_hVel[i * 4] = 0.0f;
-					m_hVel[i * 4 + 1] = 0.0f;
-					m_hVel[i * 4 + 2] = 0.0f;
-					m_hVel[i * 4 + 3] = 0.0f;
-				}
-			}
-		}
-	}
-}
 
 //TODO Refactor to generalize for more variables
 void ParticleSystem::loadSimulationData(string fileP) {
@@ -955,40 +980,6 @@ void ParticleSystem::reset(ParticleConfig config) {
 	float min = 100000, maxF = 0;
 	switch (config) {
 	default:
-	case CONFIG_RANDOM: {
-		int p = 0, v = 0;
-
-		printf("npartrandom: %d", m_numParticles);
-
-		for (uint i = 0; i < m_numParticles; i++) {
-			float point[3];
-			point[0] = frand();
-			point[1] = frand();
-			point[2] = frand();
-			m_hPos[p++] = 2 * (point[0] - 0.5f);
-			m_hPos[p++] = 2 * (point[1] - 0.5f);
-			m_hPos[p++] = 2 * (point[2] - 0.5f);
-			m_hPos[p++] = 0.1f; // radius
-			m_hVel[v++] = 0.0f;
-			m_hVel[v++] = 0.0f;
-			m_hVel[v++] = 0.0f;
-			m_hVel[v++] = 0.0f;
-			maxF < point[0] ?
-					maxF = point[0] : (min > point[0] ? min = point[0] : min);
-		}
-
-	}
-	break;
-
-	case CONFIG_GRID: {
-		float jitter = m_params.particleRadius;
-		uint s = (int) ceilf(powf((float) m_numParticles, 1.0f / 3.0f));
-		uint gridSize[3];
-		gridSize[0] = gridSize[1] = gridSize[2] = s;
-		initGrid(gridSize, m_params.particleRadius * 2.0f, jitter,
-				m_numParticles);
-	}
-	break;
 	case CONFIG_SIMULATION_DATA: {
 		int p = 0, v = 0;
 		printf("xmall: %f, ymall: %f, zmall: %f", xMaxAllowed, yMaxAllowed,
@@ -1136,8 +1127,32 @@ void ParticleSystem::generateHistogram() {
 			histogramFunc(i);
 		}
 	} else {
-		float3 leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
-		float3 rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+		float3 leftDownBack;
+				float3 rightUpFront;
+				if(enableCutting)
+				{
+					switch(currentCutter)
+					{
+					case 0:
+						leftDownBack=cutterX.pos-cutterX.size/2;
+						rightUpFront=cutterX.pos+cutterX.size/2;
+						break;
+					case 1:
+									leftDownBack=cutterY.pos-cutterY.size/2;
+									rightUpFront=cutterY.pos+cutterY.size/2;
+									break;
+					case 2:
+									leftDownBack=cutterZ.pos-cutterZ.size/2;
+									rightUpFront=cutterZ.pos+cutterZ.size/2;
+									break;
+
+					}
+
+				}
+				else{
+					leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
+					rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+				}
 
 		//update min-max local
 

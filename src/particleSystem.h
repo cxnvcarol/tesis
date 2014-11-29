@@ -42,6 +42,8 @@ public:
 	bool clipped;
 	int currentVariable;
 	int colorRangeMode;
+	bool demoCutting;
+	bool enableCutting=false;
 	bool displayLow=true,displayMiddle=true,displayHigh=true;
 
 	float* gradientInitialColor = (float*) calloc(3, sizeof(float));

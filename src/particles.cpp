@@ -78,7 +78,7 @@ bool bPause = false;
 bool displaySliders = false;
 
 bool demoMode = false;
-bool demoCutting = true;
+
 int idleCounter = 0;
 int demoCounter = 0;
 const int idleDelay = 2000;
@@ -724,7 +724,7 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		break;
 
 	case '\r':
-		demoCutting=!demoCutting;
+		psystem->demoCutting=!psystem->demoCutting;
 		break;
 
 
@@ -775,21 +775,26 @@ void special(int k, int x, int y) {
 			case GLUT_KEY_F1:
 				psystem->initCutters();
 				psystem->currentCutter=0;
-				demoCutting=true;
+				psystem->demoCutting=true;
+				psystem->clipped=true;
 				break;
 			case GLUT_KEY_F2:
 				psystem->initCutters();
 				psystem->currentCutter=1;
-				demoCutting=true;
+				psystem->demoCutting=true;
+				psystem->clipped=true;
 				break;
 			case GLUT_KEY_F3:
 				psystem->initCutters();
 				psystem->currentCutter=2;
-				demoCutting=true;
+				psystem->demoCutting=true;
+				psystem->clipped=true;
 				break;
 			case GLUT_KEY_F4:
-				demoCutting=false;
+				psystem->demoCutting=false;
 				psystem->initCutters();
+				psystem->enableCutting=false;
+				psystem->clipped=false;
 				break;
 			}
 	}
@@ -804,7 +809,7 @@ void idle(void) {
 		//        printf("Entering demo mode\n");
 	}
 
-	if (demoMode) {
+	if (demoMode) {//TODO useful for second viewport??
 		camera_rot[1] += 0.1f;
 
 		if (demoCounter++ > 1000) {
@@ -812,18 +817,13 @@ void idle(void) {
 		}
 	}
 
-	if(demoCutting)
+	if(psystem->demoCutting)
 	{
-
-		fflush(stdout);
-
 		demoCounter++;
-		if (demoCounter++ > 50) {
+		if (demoCounter++ > 20) {
 
 			psystem->advanceCutter();
-			//psystem->forwardCutterX();
-
-					demoCounter=0;
+			demoCounter=0;
 		}
 	}
 
