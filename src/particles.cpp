@@ -52,12 +52,17 @@
 
 #include "paramgl.h"
 
+#include "gnuplot-iostream.h"
+
 #define DEFAULT_COLOR_CONFIG "./colores.config"
 
 #define MAX_EPSILON_ERROR 5.00f
 #define THRESHOLD         0.30f
 
 #define GRID_SIZE       64
+
+Gnuplot gp;
+
 
 uint width = 640, height = 480;
 
@@ -133,6 +138,15 @@ extern "C" void cudaInit(int argc, char **argv);
 extern "C" void cudaGLInit(int argc, char **argv);
 extern "C" void copyArrayFromDevice(void *host, const void *device,
 		unsigned int vbo, int size);
+
+void showHistogram()
+{
+	//TODO set color, title, bars, width
+	gp<<"plot \"histog.dat\" using 1:2\n";
+	gp.flush();
+
+}
+
 
 void colorConfig(string configFilePath) {
 	if (configFilePath.empty()) {
@@ -721,6 +735,8 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		break;
 	case 'H':
 		psystem->generateHistogram();
+		showHistogram();
+
 		break;
 
 	case '\r':
@@ -795,6 +811,7 @@ void special(int k, int x, int y) {
 				psystem->initCutters();
 				psystem->enableCutting=false;
 				psystem->clipped=false;
+				psystem->updateColor();
 				break;
 			}
 	}

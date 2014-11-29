@@ -1204,10 +1204,10 @@ void ParticleSystem::generateHistogram() {
 	int totalHist = 0;
 	for (int var = 0; var < m_numberHistogramIntervals; ++var) {
 		totalHist += m_histogram[var];
-		printf("%f,%d\n", minLocalVar + var * width_histogram,
+		printf("%f %d\n", minLocalVar + var * width_histogram,
 				m_histogram[var]);
 		//myfile << "Writing this to a file.\n";
-		fprintf(myfile, "%f,%d\n", minLocalVar + var * width_histogram,
+		fprintf(myfile, "%f %d\n", minLocalVar + var * width_histogram,
 				m_histogram[var]);
 	}
 	printf("\n\ntotal cuenta: %d", totalHist);
