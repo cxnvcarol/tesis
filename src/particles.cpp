@@ -78,9 +78,11 @@ bool bPause = false;
 bool displaySliders = false;
 
 bool demoMode = false;
+bool demoCutting = true;
 int idleCounter = 0;
 int demoCounter = 0;
 const int idleDelay = 2000;
+
 
 enum {
 	M_VIEW = 0, M_MOVE
@@ -353,11 +355,18 @@ void paintCollider() {
 	float3 p = psystem->getColliderPos();
 	glTranslatef(p.x, p.y, p.z);
 	glColor3f(1.0, 0.0, 0.0);
-	//glutWireCube(psystem->getSelectXSize());
-	//glScalef(5, 1, 1);
 	float3 tamSel = psystem->getSelectSize();
 	glArrayBox(tamSel.x, tamSel.y, tamSel.z);
 
+	glPopMatrix();
+
+}
+void paintCutter(float3 p,float3 tamSel)
+{
+	glPushMatrix();
+		glTranslatef(p.x, p.y, p.z);
+		glColor3f(0.0, 1.0, 1.0);
+		glArrayBox(tamSel.x, tamSel.y, tamSel.z);
 	glPopMatrix();
 
 }
@@ -397,6 +406,9 @@ void display() {
 
 	// collider is the selector box
 	paintCollider();
+	paintCutter(psystem->cutterX.pos,psystem->cutterX.size);
+	paintCutter(psystem->cutterY.pos,psystem->cutterY.size);
+	paintCutter(psystem->cutterZ.pos,psystem->cutterZ.size);
 
 	if (renderer && displayEnabled) {
 		renderer->display(displayMode);
@@ -458,18 +470,6 @@ inline float frand() {
 	return rand() / (float) RAND_MAX;
 }
 
-void addSphere() {
-	// inject a sphere of particles
-	float pr = psystem->getParticleRadius();
-	float tr = pr + (pr * 2.0f) * ballr;
-	float pos[4], vel[4];
-	pos[0] = -1.0f + tr + frand() * (2.0f - tr * 2.0f);
-	pos[1] = 1.0f - tr;
-	pos[2] = -1.0f + tr + frand() * (2.0f - tr * 2.0f);
-	pos[3] = 0.0f;
-	vel[0] = vel[1] = vel[2] = vel[3] = 0.0f;
-	psystem->addSphere(0, pos, vel, ballr, pr * 2.0f);
-}
 
 void reshape(int w, int h) {
 	width = w;
@@ -654,19 +654,16 @@ void motion(int x, int y) {
 }
 
 // commented out to remove unused parameter warnings in Linux
-void key(unsigned char key, int /*x*/, int /*y*/) {
-	switch (key) {
+void key(unsigned char k, int /*x*/, int /*y*/) {
+	char kMayus=k;
+	if(k>96)
+		kMayus=k-32;//toUpperCase()
+	switch (kMayus) {
 	//custom cases:
-	case 's':
+	case 'R':
 		resetView();
 		break;
-	case 't': //tempo
-		if (rand() > RAND_MAX / 2)
-			psystem->updateColor();
-		else
-			psystem->initialSimulationColor();
-		break;
-	case 'l':
+	case 'X':
 		//printf("\nframe::%d\n",psystem->getCurrentFrame());
 		psystem->changeActiveVariable();
 		if (psystem->currentVariable == ParticleSystem::VAR_VELOCITY) {
@@ -679,36 +676,57 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 		//TODO case of velocity
 		break;
 
-	case 'i':
-		psystem->setAlpha(
-				psystem->getAlpha() >= 1 ? 1.0f : psystem->getAlpha() + 0.1f);
-		break;
-	case 'k':
-		psystem->setAlpha(
-				psystem->getAlpha() <= 0 ? 0.0f : psystem->getAlpha() - 0.1f);
-		break;
-	case 'c':
+	case 'C':
 		psystem->clipped = !psystem->clipped;
 		psystem->updateColor();
 		break;
-		//end custom cases
 
-	case ' ':
-		bPause = !bPause;
+	case 'I':
+		psystem->toggleDisplayLow();
+		break;
+	case 'O':
+		psystem->toggleDisplayMiddle();
+		break;
+	case 'P':
+		psystem->toggleDisplayHigh();
 		break;
 
-	case 13:
-		psystem->update(timestep);
+	case 'Q':
+		psystem->setAlpha(
+				psystem->getAlpha() >= 1 ? 1.0f : psystem->getAlpha() + 0.1f);
+		break;
+	case 'A':
+		psystem->setAlpha(
+				psystem->getAlpha() <= 0 ? 0.0f : psystem->getAlpha() - 0.1f);
+		break;
 
-		if (renderer) {
-			renderer->setVertexBuffer(psystem->getCurrentReadBuffer(),
-					psystem->getNumParticles());
+	case 'V':
+		mode = M_VIEW;
+		break;
+
+	case 'S':
+		mode = M_MOVE;
+		break;
+
+	case 'M':
+		displayMode = (ParticleRenderer::DisplayMode) ((displayMode + 1)
+				% ParticleRenderer::PARTICLE_NUM_MODES);
+		if(displayMode==ParticleRenderer::PARTICLE_ARROWS&&psystem->currentVariable!=ParticleSystem::VAR_VELOCITY)
+		{
+			key('M',0,0);
 		}
-
 		break;
+	case 'D':
+		displaySliders = !displaySliders;
+		break;
+	case 'H':
+		psystem->generateHistogram();
+		break;
+
+
+
 
 	case '\033':
-	case 'q':
 		// cudaDeviceReset causes the driver to clean up all state. While
 		// not mandatory in normal operation, it is good practice.  It is also
 		// needed to ensure correct operation when the application is being
@@ -717,70 +735,6 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 		cudaDeviceReset();
 		exit(EXIT_SUCCESS);
 		break;
-
-	case 'v':
-		mode = M_VIEW;
-		break;
-
-	case 'm':
-		mode = M_MOVE;
-		break;
-
-	case 'p':
-		displayMode = (ParticleRenderer::DisplayMode) ((displayMode + 1)
-				% ParticleRenderer::PARTICLE_NUM_MODES);
-		break;
-
-	case 'u':
-		psystem->dumpParticles(0, numParticles - 1);
-		break;
-
-	case 'r':
-		displayEnabled = !displayEnabled;
-		break;
-
-	case '0':
-		psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
-		break;
-	case '1':
-		psystem->reset(ParticleSystem::CONFIG_GRID);
-		break;
-
-	case '2':
-		psystem->reset(ParticleSystem::CONFIG_RANDOM);
-		break;
-
-	case '3':
-		addSphere();
-		break;
-
-	case '4': {
-		// shoot ball from camera
-		float pr = psystem->getParticleRadius();
-		float vel[4], velw[4], pos[4], posw[4];
-		vel[0] = 0.0f;
-		vel[1] = 0.0f;
-		vel[2] = -0.05f;
-		vel[3] = 0.0f;
-		ixform(vel, velw, modelView);
-
-		pos[0] = 0.0f;
-		pos[1] = 0.0f;
-		pos[2] = -2.5f;
-		pos[3] = 1.0;
-		ixformPoint(pos, posw, modelView);
-		posw[3] = 0.0f;
-
-		psystem->addSphere(0, posw, velw, ballr, pr * 2.0f);
-	}
-		break;
-
-	case 'd':
-		displaySliders = !displaySliders;
-		break;
-	case 'h':
-		psystem->generateHistogram();
-		break;
 	}
 
 	demoMode = false;
@@ -788,9 +742,34 @@ void key(unsigned char key, int /*x*/, int /*y*/) {
 	glutPostRedisplay();
 }
 
+
 void special(int k, int x, int y) {
+
+
 	if (displaySliders) {
 		params->Special(k, x, y);
+	}
+	else
+	{
+		switch(k)
+			{
+
+			case GLUT_KEY_UP:
+				psystem->setAlpha(
+						psystem->getAlpha() >= 1 ? 1.0f : psystem->getAlpha() + 0.1f);
+				break;
+			case GLUT_KEY_DOWN:
+				psystem->setAlpha(
+						psystem->getAlpha() <= 0 ? 0.0f : psystem->getAlpha() - 0.1f);
+				break;
+			case GLUT_KEY_LEFT:
+				psystem->rewind();
+				break;
+
+			case GLUT_KEY_RIGHT:
+				psystem->forward();
+				break;
+			}
 	}
 
 	demoMode = false;
@@ -807,9 +786,22 @@ void idle(void) {
 		camera_rot[1] += 0.1f;
 
 		if (demoCounter++ > 1000) {
-			ballr = 10 + (rand() % 10);
-			addSphere();
-			demoCounter = 0;
+			//
+		}
+	}
+
+	if(demoCutting)
+	{
+
+		fflush(stdout);
+
+		demoCounter++;
+		if (demoCounter++ > 50) {
+
+			//psystem->advanceCutter();
+			psystem->forwardCutterX();
+
+					demoCounter=0;
 		}
 	}
 
@@ -967,9 +959,8 @@ int main(int argc, char **argv) {
 				&pth);
 		colorConfig(pth);
 	} else {
-		colorConfig (DEFAULT_COLOR_CONFIG);
+		colorConfig(DEFAULT_COLOR_CONFIG);
 	}
-
 	initParams();
 
 	if (!g_refFile) {

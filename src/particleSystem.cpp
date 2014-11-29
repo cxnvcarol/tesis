@@ -35,6 +35,57 @@ GLenum modeVolume = GL_TRIANGLES_ADJACENCY;
 #define CUDART_PI_F         3.141592654f
 #endif
 
+void ParticleSystem::advanceCutter()
+{
+	//1. check if i'm in limit, if yes then invert direction
+	//2.then according to currentcutter and direction forward or advance
+	switch (currentCutter) {
+		case 0:
+			//check cutterX position
+
+			if(forwardDirectionCutter)
+			{
+forwardCutterX();
+			}
+			else{
+
+			}
+
+			break;
+		default:
+			break;
+	}
+}
+	void ParticleSystem::forwardCutterX()
+		{
+			cutterX.pos=cutterX.pos-make_float3(0.05,0,0);
+
+		}
+		void ParticleSystem::rewindCutterX()
+		{
+			cutterX.pos=cutterX.pos+make_float3(0.05,0,0);
+
+		}
+		void ParticleSystem::forwardCutterY()
+			{
+				cutterY.pos=cutterY.pos-make_float3(0,0.05,0);
+
+			}
+			void ParticleSystem::rewindCutterY()
+			{
+				cutterY.pos=cutterY.pos+make_float3(0,0.05,0);
+
+			}
+			void ParticleSystem::forwardCutterZ()
+				{
+					cutterZ.pos=cutterZ.pos-make_float3(0,0,0.05);
+
+				}
+				void ParticleSystem::rewindCutterZ()
+				{
+					cutterZ.pos=cutterZ.pos+make_float3(0,0,0.05);
+
+				}
 void ParticleSystem::setFileSource(string filePath) {
 	m_bInitialized = false;
 	loadSimulationData(filePath);
@@ -71,6 +122,8 @@ ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
 	m_params.colliderRadius = 0.2f;
 
 	m_params.selectSize = make_float3(0.4f, 0.4f, 0.4f);
+
+	initCutters();
 
 	m_params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
 	//    m_params.cellSize = make_float3(worldSize.x / m_gridSize.x, worldSize.y / m_gridSize.y, worldSize.z / m_gridSize.z);
@@ -110,6 +163,16 @@ inline float lerp(float a, float b, float t) {
 	return a + t * (b - a);
 }
 
+
+void ParticleSystem::initCutters()
+	{
+		cutterX.pos=make_float3(1,0,0);
+		cutterX.size=make_float3(0.05,2,2);
+		cutterY.pos=make_float3(0,1,0);
+		cutterY.size=make_float3(2,0.05,2);
+		cutterZ.pos=make_float3(0,0,1);
+		cutterZ.size=make_float3(2,2,0.05);
+	}
 void ParticleSystem::colorVariable(int index, float *r) {
 
 	if (currentVariable == VAR_TEMPERATURE) {
@@ -124,7 +187,7 @@ void ParticleSystem::colorVariable(int index, float *r) {
 
 }
 
-void ParticleSystem::colorVar(int index, float *r) {
+int ParticleSystem::colorVar(int index, float *r) {
 
 	//if(colorRangeMode==COLOR_GRADIENT)//{do this... } else {.. too (for now)} //TODO!
 	float *cini;// = gradientInitialColor;
@@ -236,6 +299,7 @@ void ParticleSystem::colorVar(int index, float *r) {
 		colorMin = cfin[2];
 	}
 	r[2] = varPrima * difb + colorMin;
+	return range;
 }
 
 void colorRamp(float t, float *r) {
@@ -387,8 +451,12 @@ void ParticleSystem::updateFrame() {
 
 }
 void ParticleSystem::setCurrentFrame(int newframe) {
-	currentFrame = newframe;
-	updateFrame();
+	if(newframe>-1&&newframe<nframes)
+	{
+		currentFrame = newframe;
+			updateFrame();
+	}
+
 }
 void ParticleSystem::updateColor() {
 	//TODO switch case for every variable - should be a global variable so this is done for active variable!
@@ -402,9 +470,27 @@ void ParticleSystem::updateColor() {
 	if (!clipped) {
 		for (uint i = 0; i < m_numParticles; i++) {
 
-			colorVar(i, ptr);	//colorVariable(i, ptr);
+			int rango=colorVar(i, ptr);	//colorVariable(i, ptr);
 			ptr += 3;
-			*ptr++ = alpha;
+			switch(rango)
+			{
+			case 0:
+				if(displayLow)
+					*ptr++ = alpha;
+				else *ptr++ = 0;
+				break;
+			case 1:
+				if(displayMiddle)
+					*ptr++ = alpha;
+				else *ptr++ = 0;
+				break;
+			case 2:
+				if(displayHigh)
+					*ptr++ = alpha;
+				else *ptr++ = 0;
+				break;
+			}
+
 		}
 	} else {
 		float3 leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
@@ -416,9 +502,26 @@ void ParticleSystem::updateColor() {
 					&& m_hPos[i * 4 + 1] < rightUpFront.y
 					&& m_hPos[i * 4 + 2] > leftDownBack.z
 					&& m_hPos[i * 4 + 2] < rightUpFront.z) {
-				colorVar(i, ptr);	//colorVariable(i, ptr);
+				int rango=colorVar(i, ptr);	//colorVariable(i, ptr);
 				ptr += 3;
-				*ptr++ = alpha;
+				switch(rango)
+				{
+				case 0:
+					if(displayLow)
+						*ptr++ = alpha;
+					else *ptr++ = 0;
+					break;
+				case 1:
+					if(displayMiddle)
+						*ptr++ = alpha;
+					else *ptr++ = 0;
+					break;
+				case 2:
+					if(displayHigh)
+						*ptr++ = alpha;
+					else *ptr++ = 0;
+					break;
+				}
 			} else {
 				ptr += 3;
 				*ptr++ = 0;
@@ -558,43 +661,6 @@ void ParticleSystem::update(float deltaTime) {
 	// note: do unmap at end here to avoid unnecessary graphics/CUDA context switch
 	if (m_bUseOpenGL) {
 		unmapGLBufferObject(m_cuda_posvbo_resource);
-	}
-}
-
-void ParticleSystem::dumpGrid() {
-	// dump grid information
-	copyArrayFromDevice(m_hCellStart, m_dCellStart, 0,
-			sizeof(uint) * m_numGridCells);
-	copyArrayFromDevice(m_hCellEnd, m_dCellEnd, 0,
-			sizeof(uint) * m_numGridCells);
-	uint maxCellSize = 0;
-
-	for (uint i = 0; i < m_numGridCells; i++) {
-		if (m_hCellStart[i] != 0xffffffff) {
-			uint cellSize = m_hCellEnd[i] - m_hCellStart[i];
-
-			//            printf("cell: %d, %d particles\n", i, cellSize);
-			if (cellSize > maxCellSize) {
-				maxCellSize = cellSize;
-			}
-		}
-	}
-
-	printf("maximum particles per cell = %d\n", maxCellSize);
-}
-
-void ParticleSystem::dumpParticles(uint start, uint count) {
-	// debug
-	copyArrayFromDevice(m_hPos, 0, &m_cuda_posvbo_resource,
-			sizeof(float) * 4 * count);
-	copyArrayFromDevice(m_hVel, m_dVel, 0, sizeof(float) * 4 * count);
-
-	for (uint i = start; i < start + count; i++) {
-		//        printf("%d: ", i);
-		printf("pos: (%.4f, %.4f, %.4f, %.4f)\n", m_hPos[i * 4 + 0],
-				m_hPos[i * 4 + 1], m_hPos[i * 4 + 2], m_hPos[i * 4 + 3]);
-		printf("vel: (%.4f, %.4f, %.4f, %.4f)\n", m_hVel[i * 4 + 0],
-				m_hVel[i * 4 + 1], m_hVel[i * 4 + 2], m_hVel[i * 4 + 3]);
 	}
 }
 
@@ -1128,40 +1194,4 @@ void ParticleSystem::generateHistogram() {
 	printf("\n\ntotal cuenta: %d", totalHist);
 	fclose(myfile);
 
-}
-void ParticleSystem::addSphere(int start, float *pos, float *vel, int r,
-		float spacing) {
-	uint index = start;
-
-	for (int z = -r; z <= r; z++) {
-		for (int y = -r; y <= r; y++) {
-			for (int x = -r; x <= r; x++) {
-				float dx = x * spacing;
-				float dy = y * spacing;
-				float dz = z * spacing;
-				float l = sqrtf(dx * dx + dy * dy + dz * dz);
-				float jitter = m_params.particleRadius * 0.01f;
-
-				if ((l <= m_params.particleRadius * 2.0f * r)
-						&& (index < m_numParticles)) {
-					m_hPos[index * 4] = pos[0] + dx
-							+ (frand() * 2.0f - 1.0f) * jitter;
-					m_hPos[index * 4 + 1] = pos[1] + dy
-							+ (frand() * 2.0f - 1.0f) * jitter;
-					m_hPos[index * 4 + 2] = pos[2] + dz
-							+ (frand() * 2.0f - 1.0f) * jitter;
-					m_hPos[index * 4 + 3] = pos[3];
-
-					m_hVel[index * 4] = vel[0];
-					m_hVel[index * 4 + 1] = vel[1];
-					m_hVel[index * 4 + 2] = vel[2];
-					m_hVel[index * 4 + 3] = vel[3];
-					index++;
-				}
-			}
-		}
-	}
-
-	setArray(POSITION, m_hPos, start, index);
-	setArray(VELOCITY, m_hVel, start, index);
 }

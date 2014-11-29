@@ -42,6 +42,7 @@ public:
 	bool clipped;
 	int currentVariable;
 	int colorRangeMode;
+	bool displayLow=true,displayMiddle=true,displayHigh=true;
 
 	float* gradientInitialColor = (float*) calloc(3, sizeof(float));
 	float* gradientFinalColor = (float*) calloc(3, sizeof(float));
@@ -63,16 +64,50 @@ public:
 		POSITION, VELOCITY,POSITION_VEL
 	};
 
+
+	struct cutter{
+		float3 pos;
+		float3 size;
+	};
+	cutter cutterX,cutterY,cutterZ;
+	void initCutters();
+
+	int currentCutter=0;
+	bool forwardDirectionCutter;
+	void forwardCutterX();
+		void rewindCutterX();
+		void forwardCutterY();
+				void rewindCutterY();
+				void forwardCutterZ();
+						void rewindCutterZ();
+		void advanceCutter();
+
 	//TODO quitar después, es temporal
 	void initialSimulationColor();
 	void updateColor();
 	void updateColorVect();
 	void updateFrame();
+	void toggleDisplayLow()
+	{
+		displayLow=!displayLow;
+		updateColor();
+	}
+	void toggleDisplayMiddle()
+	{
+		displayMiddle=!displayMiddle;
+		updateColor();
+	}
+	void toggleDisplayHigh()
+	{
+		displayHigh=!displayHigh;
+		updateColor();
+	}
 	void setCurrentFrame(int newframe);
 	void forward() {
 		setCurrentFrame(currentFrame + 1);
 	}
 	void rewind() {
+
 		setCurrentFrame(currentFrame - 1);
 	}
 	void changeActiveVariable();
@@ -135,7 +170,7 @@ public:
 
 	void colorTemperature(int t, float* r);
 	void colorVariable(int t, float* r);
-	void colorVar(int t, float* r);
+	int colorVar(int t, float* r);/* return range*/
 	void setFileSource(string filePath);
 	void update(float deltaTime);
 	void initDefaultData();
@@ -176,33 +211,6 @@ public:
 		return (void *) m_cudaColorVBO;
 	}
 
-	void dumpGrid();
-	void dumpParticles(uint start, uint count);
-
-	void setIterations(int i) {
-		m_solverIterations = i;
-	}
-
-	void setDamping(float x) {
-		m_params.globalDamping = x;
-	}
-	void setGravity(float x) {
-		m_params.gravity = make_float3(0.0f, x, 0.0f);
-	}
-
-	void setCollideSpring(float x) {
-		m_params.spring = x;
-	}
-	void setCollideDamping(float x) {
-		m_params.damping = x;
-	}
-	void setCollideShear(float x) {
-		m_params.shear = x;
-	}
-	void setCollideAttraction(float x) {
-		m_params.attraction = x;
-	}
-
 	void setColliderPos(float3 x) {
 		m_params.colliderPos = x;
 	}
@@ -238,7 +246,6 @@ public:
 	float getAlpha() {
 		return alpha;
 	}
-	void addSphere(int index, float *pos, float *vel, int r, float spacing);
 	void generateHistogram();
 	void histogramFunc(int index);
 
@@ -310,6 +317,7 @@ protected:
 		velocity* velocityPointer;
 	};
 
+
 	// params
 	SimParams m_params;
 	uint3 m_gridSize;
@@ -343,6 +351,7 @@ protected:
 
 	float alpha; //rango normal de 0 a 1
 	float xMaxAllowed, yMaxAllowed, zMaxAllowed;
+
 
 };
 
