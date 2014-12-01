@@ -74,9 +74,12 @@ float* Model_OBJ::calculateNormal(float *coord1, float *coord2, float *coord3) {
 }
 
 
-int Model_OBJ::Load(char* filename) {
+int Model_OBJ::Load(char* filename,float maxT) {
 	string line;
 	ifstream objFile(filename);
+	float maxSize=maxT*1000;
+
+	printf("max size obj: %f\n",maxSize);
 
 	if (objFile.is_open()) // If obj file is open, continue
 	{
@@ -97,6 +100,7 @@ int Model_OBJ::Load(char* filename) {
 			getline(objFile, line); // Get line from file
 
 			if (line.c_str()[0] == 'v') // The first character is a v: on this line is a vertex stored.
+
 					{
 				line[0] = ' '; // Set first character to 0. This will allow us to use sscanf
 
@@ -105,6 +109,9 @@ int Model_OBJ::Load(char* filename) {
 						&vertexBuffer[TotalConnectedPoints],
 						&vertexBuffer[TotalConnectedPoints + 1],
 						&vertexBuffer[TotalConnectedPoints + 2]);
+				vertexBuffer[TotalConnectedPoints]=vertexBuffer[TotalConnectedPoints]/maxSize;
+				vertexBuffer[TotalConnectedPoints+1]=vertexBuffer[TotalConnectedPoints+1]/maxSize;
+				vertexBuffer[TotalConnectedPoints+2]=vertexBuffer[TotalConnectedPoints+2]/maxSize;
 
 				TotalConnectedPoints += POINTS_PER_VERTEX; // Add 3 to the total connected points
 			}
@@ -121,6 +128,10 @@ int Model_OBJ::Load(char* filename) {
 				vertexNumber[0] -= 1; // OBJ file starts counting from 1
 				vertexNumber[1] -= 1; // OBJ file starts counting from 1
 				vertexNumber[2] -= 1; // OBJ file starts counting from 1
+
+				//vertexNumber[0]=vertexNumber[0]/maxSize;
+				//vertexNumber[1]=vertexNumber[1]/maxSize;
+				//vertexNumber[2]=vertexNumber[2]/maxSize;
 
 				/********************************************************************
 				 * Create triangles (f 1 2 3) from points: (v X Y Z) (v X Y Z) (v X Y Z).
@@ -180,19 +191,21 @@ void Model_OBJ::Release() {
 	free(this->vertexBuffer);
 }
 void Model_OBJ::DrawMode(unsigned int mode, float alpha) {
+	glPushMatrix();
 	float currentColor[4];
-		glGetFloatv(GL_CURRENT_COLOR,currentColor);
-		glColor4f(1.0, 0.0, 0.0, alpha/10.f);
+	glGetFloatv(GL_CURRENT_COLOR,currentColor);
+	glColor4f(1.0, 0.0, 0.0, alpha);
 
-		glEnableClientState(GL_VERTEX_ARRAY); // Enable vertex arrays
-		glEnableClientState(GL_NORMAL_ARRAY); // Enable normal arrays
-		glVertexPointer(3, GL_FLOAT, 0, Faces_Triangles); // Vertex Pointer to triangle array
-		glNormalPointer(GL_FLOAT, 0, normals); // Normal pointer to normal array
+	glEnableClientState(GL_VERTEX_ARRAY); // Enable vertex arrays
+	glEnableClientState(GL_NORMAL_ARRAY); // Enable normal arrays
+	glVertexPointer(3, GL_FLOAT, 0, Faces_Triangles); // Vertex Pointer to triangle array
+	glNormalPointer(GL_FLOAT, 0, normals); // Normal pointer to normal array
+	glDrawArrays(mode, 0, TotalConnectedTriangles); // Draw the triangles
+	glDisableClientState(GL_VERTEX_ARRAY); // Disable vertex arrays
+	glDisableClientState(GL_NORMAL_ARRAY); // Disable normal arrays
+	glColor4fv(currentColor);
 
-		glDrawArrays(mode, 0, TotalConnectedTriangles); // Draw the triangles
-		glDisableClientState(GL_VERTEX_ARRAY); // Disable vertex arrays
-		glDisableClientState(GL_NORMAL_ARRAY); // Disable normal arrays
-		glColor4fv(currentColor);
+	glPopMatrix();
 }
 /*
 

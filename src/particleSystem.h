@@ -46,6 +46,9 @@ public:
 	bool enableCutting=false;
 	bool displayLow=true,displayMiddle=true,displayHigh=true;
 
+	float maxTotal;
+
+
 	float* gradientInitialColor = (float*) calloc(3, sizeof(float));
 	float* gradientFinalColor = (float*) calloc(3, sizeof(float));
 	float* highColor = (float*) calloc(3, sizeof(float));
@@ -77,12 +80,12 @@ public:
 	int currentCutter=0;
 	bool forwardDirectionCutter;
 	void forwardCutterX();
-		void rewindCutterX();
-		void forwardCutterY();
-				void rewindCutterY();
-				void forwardCutterZ();
-						void rewindCutterZ();
-		void advanceCutter();
+	void rewindCutterX();
+	void forwardCutterY();
+	void rewindCutterY();
+	void forwardCutterZ();
+	void rewindCutterZ();
+	void advanceCutter();
 
 	//TODO quitar después, es temporal
 	void initialSimulationColor();
@@ -227,9 +230,6 @@ public:
 	float3 getColliderPos() {
 		return m_params.colliderPos;
 	}
-	float getColliderRadius() {
-		return m_params.colliderRadius;
-	}
 
 	float3 getSelectSize() {
 		return m_params.selectSize;
@@ -240,9 +240,6 @@ public:
 	}
 	float3 getWorldOrigin() {
 		return m_params.worldOrigin;
-	}
-	float3 getCellSize() {
-		return m_params.cellSize;
 	}
 
 	float getAlpha() {
@@ -269,7 +266,6 @@ protected:
 
 	// CPU data
 	float *m_hPos;              // particle positions
-	float *m_hPosVel;              // particle positions, starting and end point of arrow
 	float *m_hVel;              // particle velocities
 
 	uint *m_hParticleHash;
@@ -278,7 +274,7 @@ protected:
 
 	// GPU data
 	float *m_dPos;
-	float *m_dVel;
+	//float *m_dVel;
 
 	float *m_dSortedPos;
 	float *m_dSortedVel;
@@ -328,9 +324,6 @@ protected:
 	StopWatchInterface *m_timer;
 
 	uint m_solverIterations;
-
-	//custom
-	Model_OBJ obj;
 
 	dataframe frames[MAX_ITERATIONS]; //pointers to data of each frame//calloc?
 

@@ -121,7 +121,13 @@ StopWatchInterface *timer = NULL;
 
 ParticleRenderer *renderer = 0;
 
+Model_OBJ obj;
+
+int obj_drawmode=0;
+float obj_alpha=0.4f;
+
 float modelView[16];
+float modelView2[16];
 
 ParamListGL *params;
 ParamListGL *videoPlayer;
@@ -147,6 +153,14 @@ void showHistogram()
 
 }
 
+void changeObjDrawMode()
+{
+	obj_drawmode=(obj_drawmode+1)%4;
+	if(obj_drawmode==3)
+		obj_alpha=0;
+	else if(obj_drawmode==0)
+		obj_alpha=0.4f;
+}
 
 void colorConfig(string configFilePath) {
 	if (configFilePath.empty()) {
@@ -261,6 +275,7 @@ void initSimulationSystem(uint3 gridSize, bool bUseOpenGL, string filePath) {
 			psystem->setFileSource(DATAFILE_PATH);
 		}
 	}
+	printf("data simulation loaded");
 	psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
 
 	if (bUseOpenGL) {
@@ -372,7 +387,33 @@ void paintCollider() {
 	float3 tamSel = psystem->getSelectSize();
 	glArrayBox(tamSel.x, tamSel.y, tamSel.z);
 
+
 	glPopMatrix();
+
+}
+void paintPosition(float3 pos)
+{
+	glPushMatrix();
+	float3 p = pos;
+	glTranslatef(p.x, p.y, p.z);
+	glColor3f(1.0, 1.0, 0.0);
+	float3 tamSel = make_float3(0.1,0.1,0.1);
+	glutSolidCylinder(tamSel.x, tamSel.y, 10,10);
+
+	glBegin(GL_LINES);
+	glVertex3f(p.x, p.y, -2);
+	glVertex3f(p.x, p.y, 2);
+
+	glVertex3f(p.x, -2, p.z);
+	glVertex3f(p.x, 2,p.z);
+
+	glVertex3f(-2, p.y, p.z);
+	glVertex3f(2, p.y, p.z);
+
+		glEnd();
+
+
+		glPopMatrix();
 
 }
 void paintCutter(float3 p,float3 tamSel)
@@ -387,14 +428,11 @@ void paintCutter(float3 p,float3 tamSel)
 void display() {
 	sdkStartTimer(&timer);
 
+
 	// update the simulation
 	renderer->setVertexBuffer(psystem->getCurrentReadBuffer(),
 			psystem->getNumParticles());
 
-	//TODO
-	//set secondvertex buffer: with double size and with second point for each point as the point of arrow.
-	//precalculate in psystem
-	// render
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// view transform
@@ -424,6 +462,12 @@ void display() {
 	paintCutter(psystem->cutterY.pos,psystem->cutterY.size);
 	paintCutter(psystem->cutterZ.pos,psystem->cutterZ.size);
 
+	//paint wireframe
+
+	if(obj_alpha>0)
+		obj.DrawMode(obj_drawmode,obj_alpha);
+
+
 	if (renderer && displayEnabled) {
 		renderer->display(displayMode);
 	}
@@ -447,30 +491,25 @@ void display() {
 		glEnable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	//TODO Wireframe for positioning and comparission of simulations
-	/*
-	 glViewport(width/2, 0, width/2, height);
+
+	glMatrixMode(GL_MODELVIEW);
+	 glViewport(0,height*3/4, width*1/4,height*1/4);
 	 glLoadIdentity();
 
-	 for (int c = 0; c < 3; ++c) {
-	 camera_trans_lag[c] += (camera_trans[c] - camera_trans_lag[c])
-	 * inertia;
-	 camera_rot_lag[c] += (camera_rot[c] - camera_rot_lag[c]) * inertia;
-	 }
+	 //glClearColor(0,0,0.5,1);
 
-	 glTranslatef(camera_trans_lag[0], camera_trans_lag[1], camera_trans_lag[2]);
-	 glRotatef(camera_rot_lag[0], 1.0, 0.0, 0.0);
-	 glRotatef(camera_rot_lag[1], 0.0, 1.0, 0.0);
+		glTranslatef(1,0,-3);
 
-	 glGetFloatv(GL_MODELVIEW_MATRIX, modelView);
+		glGetFloatv(GL_MODELVIEW_MATRIX, modelView2);
 
-	 // cube
-	 glColor3f(1.0, 1.0, 1.0);
-	 glutWireCube(2.0);
+		// cube
+		glColor3f(1.0, 1.0, 1.0);
+		glutWireCube(2.0);
 
-	 // collider
-	 paintCollider();
-	 */
+		//obj.DrawMode(GL_POINTS,0.1f);
+		paintPosition(make_float3(camera_trans_lag[0],camera_trans_lag[1],camera_trans_lag[2]));
+
+
 
 	sdkStopTimer(&timer);
 
@@ -695,14 +734,17 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		psystem->updateColor();
 		break;
 
-	case 'I':
+	case 'J':
 		psystem->toggleDisplayLow();
 		break;
-	case 'O':
+	case 'K':
 		psystem->toggleDisplayMiddle();
 		break;
-	case 'P':
+	case 'L':
 		psystem->toggleDisplayHigh();
+		break;
+	case 'O':
+		changeObjDrawMode();
 		break;
 
 	case 'Q':
@@ -980,7 +1022,7 @@ int main(int argc, char **argv) {
 		cudaGLInit(argc, argv);
 	}
 
-	if (checkCmdLineFlag(argc, (const char **) argv, "datafile")) {
+		if (checkCmdLineFlag(argc, (const char **) argv, "datafile")) {
 		char* pth;
 		getCmdLineArgumentString(argc, (const char **) argv, "datafile", &pth);
 		fflush(stdout);
@@ -1001,6 +1043,12 @@ int main(int argc, char **argv) {
 		colorConfig(DEFAULT_COLOR_CONFIG);
 	}
 	initParams();
+
+	printf("\nantes del obj\n");
+	fflush(stdout);
+	obj.Load(OBJ_PATH,psystem->maxTotal);
+	printf("\nvolumen cargado\n");
+	fflush(stdout);
 
 	if (!g_refFile) {
 		initMenus();

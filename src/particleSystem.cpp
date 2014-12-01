@@ -100,7 +100,7 @@ void ParticleSystem::setFileSource(string filePath) {
 
 ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
 				m_bInitialized(false), m_bUseOpenGL(bUseOpenGL), m_numParticles(0), m_hPos(
-						0), m_hVel(0), m_dPos(0), m_dVel(0), m_gridSize(gridSize), m_timer(
+						0), m_hVel(0), m_dPos(0), m_gridSize(gridSize), m_timer(
 								NULL), m_solverIterations(1), alpha(1), clipped(false), currentVariable(
 										0), m_numberHistogramIntervals(MAX_HISTOGRAM_INTERVALS), m_histogram(
 												0) {
@@ -331,12 +331,10 @@ void ParticleSystem::_initialize(int numParticles) {
 
 	m_histogram = new uint[m_numberHistogramIntervals];
 	// allocate host storage
-	m_hPos = new float[m_numParticles * 8];
-	m_hPosVel = new float[m_numParticles * 8];//starting and end point
-	m_hVel = new float[m_numParticles * 4];
-	memset(m_hPosVel, 0, m_numParticles * 8 * sizeof(float));
-	memset(m_hPos, 0, m_numParticles * 4 * sizeof(float));
-	memset(m_hVel, 0, m_numParticles * 4 * sizeof(float));
+	m_hPos = new float[m_numParticles * 8];//(float*)calloc(m_numParticles,8*sizeof(float));
+	m_hVel = new float[m_numParticles * 8];
+	memset(m_hPos, 0, m_numParticles * 8 * sizeof(float));
+	memset(m_hVel, 0, m_numParticles *8* sizeof(float));
 
 	m_hCellStart = new uint[m_numGridCells];
 	memset(m_hCellStart, 0, m_numGridCells * sizeof(uint));
@@ -355,7 +353,7 @@ void ParticleSystem::_initialize(int numParticles) {
 		checkCudaErrors(cudaMalloc((void ** )&m_cudaPosVBO, memSize));
 	}
 
-	allocateArray((void **) &m_dVel, memSize);
+	//allocateArray((void **) &m_dVel, memSize);
 
 	allocateArray((void **) &m_dSortedPos, memSize);
 	allocateArray((void **) &m_dSortedVel, memSize);
@@ -660,7 +658,7 @@ void ParticleSystem::_finalize() {
 	delete[] m_hCellStart;
 	delete[] m_hCellEnd;
 
-	freeArray(m_dVel);
+	//freeArray(m_dVel);
 	freeArray(m_dSortedPos);
 	freeArray(m_dSortedVel);
 
@@ -677,46 +675,6 @@ void ParticleSystem::_finalize() {
 	} else {
 		checkCudaErrors(cudaFree(m_cudaPosVBO));
 		checkCudaErrors(cudaFree(m_cudaColorVBO));
-	}
-}
-
-// step the simulation
-void ParticleSystem::update(float deltaTime) {
-	assert(m_bInitialized);
-
-	float *dPos;
-
-	if (m_bUseOpenGL) {
-		dPos = (float *) mapGLBufferObject(&m_cuda_posvbo_resource);
-	} else {
-		dPos = (float *) m_cudaPosVBO;
-	}
-
-	// update constants
-	setParameters(&m_params);
-
-	// integrate
-	integrateSystem(dPos, m_dVel, deltaTime, m_numParticles);
-
-	// calculate grid hash
-	calcHash(m_dGridParticleHash, m_dGridParticleIndex, dPos, m_numParticles);
-
-	// sort particles based on hash
-	sortParticles(m_dGridParticleHash, m_dGridParticleIndex, m_numParticles);
-
-	// reorder particle arrays into sorted order and
-	// find start and end of each cell
-	reorderDataAndFindCellStart(m_dCellStart, m_dCellEnd, m_dSortedPos,
-			m_dSortedVel, m_dGridParticleHash, m_dGridParticleIndex, dPos,
-			m_dVel, m_numParticles, m_numGridCells);
-
-	// process collisions
-	collide(m_dVel, m_dSortedPos, m_dSortedVel, m_dGridParticleIndex,
-			m_dCellStart, m_dCellEnd, m_numParticles, m_numGridCells);
-
-	// note: do unmap at end here to avoid unnecessary graphics/CUDA context switch
-	if (m_bUseOpenGL) {
-		unmapGLBufferObject(m_cuda_posvbo_resource);
 	}
 }
 
@@ -738,7 +696,7 @@ ParticleSystem::getArray(ParticleArray array) {
 
 	case VELOCITY:
 		hdata = m_hVel;
-		ddata = m_dVel;
+		//ddata = m_dVel;
 		break;
 	}
 
@@ -778,8 +736,7 @@ void ParticleSystem::setArray(ParticleArray array, const float *data, int start,
 	}
 	break;
 	case VELOCITY:
-		copyArrayToDevice(m_dVel, data, start * 4 * sizeof(float),
-				count * 4 * sizeof(float));
+		//copyArrayToDevice(m_dVel, data, start * 4 * sizeof(float),count * 4 * sizeof(float));
 		break;
 	}
 }
@@ -969,9 +926,6 @@ void ParticleSystem::loadSimulationData(string fileP) {
 }
 
 void ParticleSystem::initDefaultData() {
-	obj.Load(OBJ_PATH);
-	printf("volumen cargado");
-	fflush(stdout);
 	loadSimulationData(DATAFILE_PATH);
 
 }
@@ -986,7 +940,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 				zMaxAllowed);
 		fflush(stdout);
 
-		float maxTotal = max(xMaxAllowed, max(yMaxAllowed, zMaxAllowed));
+		 maxTotal = max(xMaxAllowed, max(yMaxAllowed, zMaxAllowed));
 
 		try {
 			uint i = 0;
@@ -1014,7 +968,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 
 	case CONFIG_SIMULATION_DATA_VEL: {
 		int p = 0;
-		float maxTotal = max(xMaxAllowed, max(yMaxAllowed, zMaxAllowed));
+		maxTotal = max(xMaxAllowed, max(yMaxAllowed, zMaxAllowed));
 
 		try {
 			uint i = 0;
@@ -1204,11 +1158,7 @@ void ParticleSystem::generateHistogram() {
 	int totalHist = 0;
 	for (int var = 0; var < m_numberHistogramIntervals; ++var) {
 		totalHist += m_histogram[var];
-		printf("%f %d\n", minLocalVar + var * width_histogram,
-				m_histogram[var]);
-		//myfile << "Writing this to a file.\n";
-		fprintf(myfile, "%f %d\n", minLocalVar + var * width_histogram,
-				m_histogram[var]);
+		fprintf(myfile, "%f %d\n", minLocalVar + var * width_histogram,m_histogram[var]);
 	}
 	printf("\n\ntotal cuenta: %d", totalHist);
 	fclose(myfile);
