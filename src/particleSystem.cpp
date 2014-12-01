@@ -119,7 +119,7 @@ ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
 	m_params.numCells = m_numGridCells;
 	m_params.numBodies = m_numParticles;
 
-	//TODO set radius with intelligence
+	//TODO set radius smarter
 	m_params.particleRadius = 1.0f / 640.0f * 3;
 
 	//m_params.particleRadius = 1.0f / 64000.0f;
@@ -746,7 +746,7 @@ inline float frand() {
 }
 
 
-//TODO Refactor to generalize for more variables
+//TODO Refactor to generalize for more variables or different order
 void ParticleSystem::loadSimulationData(string fileP) {
 	printf("iniciaCarga");
 	cout << fileP;
@@ -985,7 +985,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 					float diry=velArray[i].direction[1];
 					float dirz=velArray[i].direction[2];
 					//TODO Afinar factor
-					float scaleFactor=m_params.particleRadius*30/vmax;//TODO test this number
+					float scaleFactor=m_params.particleRadius*20/vmax;//TODO test this number
 					if(velArray[i].magnitude>=vmax*0.9)
 					{
 						point2[0]=point[0]+dirx*scaleFactor;
@@ -1050,29 +1050,28 @@ void ParticleSystem::histogramFunc(int ind) {
 	switch (currentVariable) {
 	case VAR_PRESSURE:
 		index = (int) ((pressureArray[ind] - minLocalVar) / width_histogram);
-		m_histogram[index]++;
 		break;
 	case VAR_TEMPERATURE:
 		index = (int) ((temp[ind] - minLocalVar) / width_histogram);
-		m_histogram[index]++;
 		break;
 	case VAR_VELOCITY:
-		//TODO
+		index = (int) ((velArray[ind].magnitude - minLocalVar) / width_histogram);
 		break;
 	}
+	m_histogram[index]++;
 
 }
 
 void ParticleSystem::generateHistogram() {
 
 	for (int var = 0; var < m_numberHistogramIntervals; ++var) {
-		m_histogram[var] = 0;
+		m_histogram[var] = 0;//memset?
 	}
 
 	if (!clipped) {
-		//update mix-max local:
-		minLocalVar = currentVariable == VAR_TEMPERATURE ? tmin : pmin;
-		maxLocalVar = currentVariable == VAR_TEMPERATURE ? tmax : pmax;
+		//update min-max local:
+		minLocalVar = currentVariable == VAR_TEMPERATURE ? tmin : currentVariable == VAR_PRESSURE?pmin:vmin;
+		maxLocalVar = currentVariable == VAR_TEMPERATURE ? tmax : currentVariable == VAR_PRESSURE?pmax:vmax;
 
 		width_histogram = maxLocalVar - minLocalVar;
 		width_histogram = width_histogram / m_numberHistogramIntervals;
@@ -1132,7 +1131,10 @@ void ParticleSystem::generateHistogram() {
 						maxLocalVar = pressureArray[i];
 					break;
 				case VAR_VELOCITY:
-					//TODO
+					if (velArray[i].magnitude < minLocalVar)
+						minLocalVar = velArray[i].magnitude;
+					else if (velArray[i].magnitude > maxLocalVar)
+						maxLocalVar = velArray[i].magnitude;
 					break;
 				}
 			}

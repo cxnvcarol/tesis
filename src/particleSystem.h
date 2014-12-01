@@ -22,6 +22,8 @@
 //custom
 #include "ModelOBJ.h"
 
+
+
 #define MAX_CELLS	2500000
 
 #define PATH_INI	"."
@@ -48,6 +50,7 @@ public:
 
 	float maxTotal;
 
+	float maxLocalVar, minLocalVar, width_histogram;
 
 	float* gradientInitialColor = (float*) calloc(3, sizeof(float));
 	float* gradientFinalColor = (float*) calloc(3, sizeof(float));
@@ -298,7 +301,7 @@ protected:
 
 	uint* m_histogram;
 	uint m_numberHistogramIntervals;
-	float maxLocalVar, minLocalVar, width_histogram;
+
 
 	struct cudaGraphicsResource *m_cuda_posvbo_resource; // handles OpenGL-CUDA exchange
 	struct cudaGraphicsResource *m_cuda_colorvbo_resource; // handles OpenGL-CUDA exchange

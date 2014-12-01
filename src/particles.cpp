@@ -148,9 +148,14 @@ extern "C" void copyArrayFromDevice(void *host, const void *device,
 void showHistogram()
 {
 	//TODO set color, title, bars, width
-	gp<<"plot \"histog.dat\" using 1:2\n";
+	float widthBar=psystem->width_histogram;
+	int boxwidth=  (int)(widthBar*0.9);
+	gp<<"set boxwidth "<<boxwidth<<"\n";
+	gp<<"set style fill solid 0.5\n";
+	gp<<"set xlabel \"x\"\n";
+	gp<<"set ylabel \"Frequency\"\n";
+	gp<<"plot \"histog.dat\" using 1:2 smooth freq w boxes lc rgb\"green\" notitle\n";
 	gp.flush();
-
 }
 
 void changeObjDrawMode()
@@ -394,21 +399,26 @@ void paintCollider() {
 void paintPosition(float3 pos)
 {
 	glPushMatrix();
-	float3 p = pos;
-	glTranslatef(p.x, p.y, p.z);
+	float3 p2 = pos;
+	glTranslatef(p2.x, p2.y, p2.z);
 	glColor3f(1.0, 1.0, 0.0);
 	float3 tamSel = make_float3(0.1,0.1,0.1);
 	glutSolidCylinder(tamSel.x, tamSel.y, 10,10);
 
+
+	float3 p=pos;
+	p.x+=0.2f;
+	p.z-=3;
+
 	glBegin(GL_LINES);
-	glVertex3f(p.x, p.y, -2);
-	glVertex3f(p.x, p.y, 2);
+	glVertex3f(p.x, p.y, -11);
+	glVertex3f(p.x, p.y, -3);
 
-	glVertex3f(p.x, -2, p.z);
-	glVertex3f(p.x, 2,p.z);
+	glVertex3f(p.x, -4, p.z);
+	glVertex3f(p.x, 4,p.z);
 
-	glVertex3f(-2, p.y, p.z);
-	glVertex3f(2, p.y, p.z);
+	glVertex3f(-4, p.y, p.z);
+	glVertex3f(4, p.y, p.z);
 
 		glEnd();
 
@@ -498,7 +508,7 @@ void display() {
 
 	 //glClearColor(0,0,0.5,1);
 
-		glTranslatef(1,0,-3);
+		glTranslatef(0.2f,0,-3);
 
 		glGetFloatv(GL_MODELVIEW_MATRIX, modelView2);
 
@@ -794,6 +804,7 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		// profiled. Calling cudaDeviceReset causes all profile data to be
 		// flushed before the application exits
 		cudaDeviceReset();
+		gp<<"exit\n";
 		exit(EXIT_SUCCESS);
 		break;
 	}
