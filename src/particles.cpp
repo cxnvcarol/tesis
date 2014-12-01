@@ -78,6 +78,7 @@ const float inertia = 0.1f;
 ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS; //important!!
 
 int mode = 0;
+bool playMode=false;
 bool displayEnabled = true;
 bool bPause = false;
 bool displaySliders = false;
@@ -86,6 +87,7 @@ bool demoMode = false;
 
 int idleCounter = 0;
 int demoCounter = 0;
+int playCounter = 0;
 const int idleDelay = 2000;
 
 
@@ -757,6 +759,9 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		changeObjDrawMode();
 		break;
 
+	case 'P'://play and pause simulation
+		playMode!=playMode;
+		break;
 	case 'Q':
 		psystem->setAlpha(
 				psystem->getAlpha() >= 1 ? 1.0f : psystem->getAlpha() + 0.1f);
@@ -879,14 +884,6 @@ void idle(void) {
 		//        printf("Entering demo mode\n");
 	}
 
-	if (demoMode) {//TODO useful for second viewport??
-		camera_rot[1] += 0.1f;
-
-		if (demoCounter++ > 1000) {
-			//
-		}
-	}
-
 	if(psystem->demoCutting)
 	{
 		demoCounter++;
@@ -895,6 +892,16 @@ void idle(void) {
 			psystem->advanceCutter();
 			demoCounter=0;
 		}
+	}
+	if(playMode)
+	{
+		playCounter++;
+				if (playCounter++ > 15) {
+
+					psystem->forward();
+					playCounter=0;
+				}
+
 	}
 
 	glutPostRedisplay();

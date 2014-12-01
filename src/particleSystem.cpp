@@ -459,8 +459,17 @@ void ParticleSystem::setCurrentFrame(int newframe) {
 	if(newframe>-1&&newframe<nframes)
 	{
 		currentFrame = newframe;
-			updateFrame();
+
 	}
+	else if(newframe<0)
+	{
+		currentFrame=nframes-1;
+	}
+	else
+	{
+		currentFrame=0;
+	}
+	updateFrame();
 
 }
 void ParticleSystem::updateColor() {
