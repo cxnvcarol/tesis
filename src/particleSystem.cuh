@@ -26,8 +26,6 @@ extern "C"
     void unmapGLBufferObject(struct cudaGraphicsResource *cuda_vbo_resource);
 
 
-    void setParameters(SimParams *hostParams);
-
     void integrateSystem(float *pos,
                          float *vel,
                          float deltaTime,

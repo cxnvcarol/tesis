@@ -112,43 +112,17 @@ ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
 	m_numGridCells = m_gridSize.x * m_gridSize.y * m_gridSize.z;
 	//    float3 worldSize = make_float3(2.0f, 2.0f, 2.0f);
 
-	m_gridSortBits = 18;    // increase this for larger grids
-
-	// set simulation parameters
-	m_params.gridSize = m_gridSize;
-	m_params.numCells = m_numGridCells;
-	m_params.numBodies = m_numParticles;
-
 	//TODO set radius smarter
-	m_params.particleRadius = 1.0f / 640.0f * 3;
+	particleRadius = 1.0f / 640.0f * 3;
 
 	//m_params.particleRadius = 1.0f / 64000.0f;
-	m_params.colliderPos = make_float3(-1.2f, -0.8f, 0.8f);
-	m_params.colliderRadius = 0.2f;
-
-	m_params.selectSize = make_float3(0.4f, 0.4f, 0.4f);
+	cutterBox.pos = make_float3(-1.2f, -0.8f, 0.8f);
+	cutterBox.size = make_float3(0.4f, 0.4f, 0.4f);
 
 	initCutters();
 	enableCutting=false;
 
-	m_params.worldOrigin = make_float3(-1.0f, -1.0f, -1.0f);
 	//    m_params.cellSize = make_float3(worldSize.x / m_gridSize.x, worldSize.y / m_gridSize.y, worldSize.z / m_gridSize.z);
-	float cellSize = m_params.particleRadius * 2.0f; // cell size equal to particle diameter
-	m_params.cellSize = make_float3(cellSize, cellSize, cellSize);
-
-	m_params.spring = 0.5f;
-	m_params.damping = 0.02f;
-	m_params.shear = 0.1f;
-	m_params.attraction = 0.0f;
-	m_params.boundaryDamping = -0.5f;
-
-	m_params.gravity = make_float3(0.0f, -0.0003f, 0.0f);
-	m_params.globalDamping = 1.0f;
-	m_params.rangeColor = 255;
-
-	//_initialize(numParticles);
-
-	//initDefaultData();
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -335,22 +309,20 @@ void ParticleSystem::_initialize(int numParticles) {
 	m_hVel = new float[m_numParticles * 8];
 	memset(m_hPos, 0, m_numParticles * 8 * sizeof(float));
 	memset(m_hVel, 0, m_numParticles *8* sizeof(float));
-
-	m_hCellStart = new uint[m_numGridCells];
-	memset(m_hCellStart, 0, m_numGridCells * sizeof(uint));
-
-	m_hCellEnd = new uint[m_numGridCells];
-	memset(m_hCellEnd, 0, m_numGridCells * sizeof(uint));
-
-	// allocate GPU data
 	unsigned int memSize = sizeof(float) * 4 * m_numParticles;
 
 	if (m_bUseOpenGL) {
 		//m_posVbo = createVBO(memSize);
+		printf("memsize:%d",memSize);
 		m_posVbo = createVBO(memSize*2);
+		printf("posvbo created");
+			fflush(stdout);
+
 		registerGLBufferObject(m_posVbo, &m_cuda_posvbo_resource);
+
 	} else {
 		checkCudaErrors(cudaMalloc((void ** )&m_cudaPosVBO, memSize));
+
 	}
 
 	//allocateArray((void **) &m_dVel, memSize);
@@ -358,13 +330,6 @@ void ParticleSystem::_initialize(int numParticles) {
 	allocateArray((void **) &m_dSortedPos, memSize);
 	allocateArray((void **) &m_dSortedVel, memSize);
 
-	allocateArray((void **) &m_dGridParticleHash,
-			m_numParticles * sizeof(uint));
-	allocateArray((void **) &m_dGridParticleIndex,
-			m_numParticles * sizeof(uint));
-
-	allocateArray((void **) &m_dCellStart, m_numGridCells * sizeof(uint));
-	allocateArray((void **) &m_dCellEnd, m_numGridCells * sizeof(uint));
 
 	if (m_bUseOpenGL) {
 		m_colorVBO = createVBO(m_numParticles * 4 * sizeof(float));
@@ -382,7 +347,6 @@ void ParticleSystem::_initialize(int numParticles) {
 
 	sdkCreateTimer(&m_timer);
 
-	setParameters(&m_params);
 
 	m_bInitialized = true;
 }
@@ -422,6 +386,7 @@ void ParticleSystem::initialSimulationColor() {
 	printf("\nElapsed time color: %ld milliseconds\n", mtime);
 
 	glUnmapBufferARB(GL_ARRAY_BUFFER);
+	printf("\nunmapped arb");
 }
 void ParticleSystem::setAlpha(float al) {
 	alpha = al;
@@ -436,17 +401,11 @@ void ParticleSystem::updateFrame() {
 		currentFrame = 0;
 	//just before:
 
-	printf("\old frame:\npressArray:: *p:%f,p:%d,&p:%d", *pressureArray,
-			pressureArray, &pressureArray);
 	fflush(stdout);
-	printf("\new frame: %d\npressure:: ", currentFrame);
+	printf("\new frame: %d\n", currentFrame);
 	fflush(stdout);
 	//printf("frameTempPointer:: *p:%f",*(frames[currentFrame].pressurePointer));
 	//fflush(stdout);
-	printf(",p:%d", frames[currentFrame].pressurePointer);
-	fflush(stdout);
-	printf(",&p:%d", &(frames[currentFrame].pressurePointer));
-	fflush(stdout);
 	velArray = frames[currentFrame].velocityPointer;
 	pressureArray = frames[currentFrame].pressurePointer;
 	temp = frames[currentFrame].temperaturePointer;
@@ -531,8 +490,8 @@ void ParticleSystem::updateColor() {
 
 		}
 		else{
-			leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
-			rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+			leftDownBack = cutterBox.pos - cutterBox.size / 2;
+			rightUpFront = cutterBox.pos + cutterBox.size / 2;
 		}
 
 		for (uint i = 0; i < m_numParticles; i++) {
@@ -616,8 +575,8 @@ void ParticleSystem::updateColorVect() {
 
 				}
 				else{
-					leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
-					rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+					leftDownBack = cutterBox.pos - cutterBox.size / 2;
+								rightUpFront = cutterBox.pos + cutterBox.size / 2;
 				}
 
 		for (uint i = 0; i < m_numParticles; i++) {
@@ -664,17 +623,10 @@ void ParticleSystem::_finalize() {
 
 	delete[] m_hPos;
 	delete[] m_hVel;
-	delete[] m_hCellStart;
-	delete[] m_hCellEnd;
 
 	//freeArray(m_dVel);
 	freeArray(m_dSortedPos);
 	freeArray(m_dSortedVel);
-
-	freeArray(m_dGridParticleHash);
-	freeArray(m_dGridParticleIndex);
-	freeArray(m_dCellStart);
-	freeArray(m_dCellEnd);
 
 	if (m_bUseOpenGL) {
 		unregisterGLBufferObject(m_cuda_posvbo_resource);
@@ -816,8 +768,6 @@ void ParticleSystem::loadSimulationData(string fileP) {
 
 					velArray = (velocity*) malloc(MAX_CELLS * sizeof(velocity));
 
-					printf("\npp:%d  *pp:%f   &pp:%d\n", pressureArray,
-							*pressureArray, &pressureArray);
 
 					frames[nframes].pressurePointer = pressureArray;
 					frames[nframes].temperaturePointer = temp;
@@ -994,7 +944,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 					float diry=velArray[i].direction[1];
 					float dirz=velArray[i].direction[2];
 					//TODO Afinar factor
-					float scaleFactor=m_params.particleRadius*20/vmax;//TODO test this number
+					float scaleFactor=particleRadius*20/vmax;//TODO test this number
 					if(velArray[i].magnitude>=vmax*0.9)
 					{
 						point2[0]=point[0]+dirx*scaleFactor;
@@ -1047,7 +997,7 @@ void ParticleSystem::calculateSecondPoint(float *p1,float *p2,int index)
 	float diry=velArray[index].direction[1];
 	float dirz=velArray[index].direction[2];
 
-	float scaleFactor=m_params.particleRadius*500/vmax;//TODO test this number
+	float scaleFactor=particleRadius*500/vmax;//TODO test this number
 	p2[0]=p1[0]+dirx*scaleFactor;
 	p2[1]=p1[1]+dirx*scaleFactor;
 	p2[2]=p1[2]+dirx*scaleFactor;
@@ -1112,8 +1062,8 @@ void ParticleSystem::generateHistogram() {
 
 				}
 				else{
-					leftDownBack = m_params.colliderPos - m_params.selectSize / 2;
-					rightUpFront = m_params.colliderPos + m_params.selectSize / 2;
+					leftDownBack = cutterBox.pos - cutterBox.size / 2;
+								rightUpFront = cutterBox.pos + cutterBox.size / 2;
 				}
 
 		//update min-max local

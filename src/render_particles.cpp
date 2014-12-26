@@ -184,6 +184,7 @@ ParticleRenderer::_compileProgram(const char *vsource, const char *fsource, cons
         {
     	glShaderSource(geometryShader, 1, &gsource, 0);
     	glCompileShader(geometryShader);
+    	printf("oh yeah!!");
         }
 
     GLuint program = glCreateProgram();
@@ -195,8 +196,10 @@ ParticleRenderer::_compileProgram(const char *vsource, const char *fsource, cons
     	glAttachShader(program, geometryShader);
     }
 
+    printf("\nattached oh yeah!!\n");
     glLinkProgram(program);
 
+    printf("linked oh yeah!!\n");
     // check if program linked
     GLint success = 0;
     glGetProgramiv(program, GL_LINK_STATUS, &success);

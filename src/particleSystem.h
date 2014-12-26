@@ -47,6 +47,7 @@ public:
 	bool demoCutting;
 	bool enableCutting=false;
 	bool displayLow=true,displayMiddle=true,displayHigh=true;
+	float particleRadius;
 
 	float maxTotal;
 
@@ -77,7 +78,7 @@ public:
 		float3 pos;
 		float3 size;
 	};
-	cutter cutterX,cutterY,cutterZ;
+	cutter cutterX,cutterY,cutterZ,cutterBox;
 	void initCutters();
 
 	int currentCutter=0;
@@ -220,30 +221,24 @@ public:
 	}
 
 	void setColliderPos(float3 x) {
-		m_params.colliderPos = x;
+		cutterBox.pos=x;
 	}
 
 	void setSelectedSize(float3 x) {
-		m_params.selectSize = x;
+		cutterBox.size=x;
 	}
 
 	float getParticleRadius() {
-		return m_params.particleRadius;
+		return particleRadius;
 	}
 	float3 getColliderPos() {
-		return m_params.colliderPos;
+		return cutterBox.pos;
 	}
 
 	float3 getSelectSize() {
-		return m_params.selectSize;
+		return cutterBox.size;
 	}
 
-	uint3 getGridSize() {
-		return m_params.gridSize;
-	}
-	float3 getWorldOrigin() {
-		return m_params.worldOrigin;
-	}
 
 	float getAlpha() {
 		return alpha;
@@ -271,24 +266,12 @@ protected:
 	float *m_hPos;              // particle positions
 	float *m_hVel;              // particle velocities
 
-	uint *m_hParticleHash;
-	uint *m_hCellStart;
-	uint *m_hCellEnd;
-
 	// GPU data
 	float *m_dPos;
 	//float *m_dVel;
 
 	float *m_dSortedPos;
 	float *m_dSortedVel;
-
-	// grid data for sorting method
-	uint *m_dGridParticleHash; // grid hash value for each particle
-	uint *m_dGridParticleIndex; // particle index for each particle
-	uint *m_dCellStart;        // index of start of each cell in sorted list
-	uint *m_dCellEnd;          // index of end of cell
-
-	uint m_gridSortBits;
 
 	uint m_posVbo;            // vertex buffer object for particle positions
 	uint m_temperatureColor;
@@ -318,9 +301,6 @@ protected:
 		velocity* velocityPointer;
 	};
 
-
-	// params
-	SimParams m_params;
 	uint3 m_gridSize;
 	uint m_numGridCells;
 

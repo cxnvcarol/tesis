@@ -74,8 +74,8 @@ float camera_rot[] = { 0, 0, 0 };
 float camera_trans_lag[] = { 0, 0, -3 };
 float camera_rot_lag[] = { 0, 0, 0 };
 const float inertia = 0.1f;
-//ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
-ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS; //important!!
+ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
+//ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS; //important!!
 
 int mode = 0;
 bool playMode=false;
@@ -760,7 +760,7 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		break;
 
 	case 'P'://play and pause simulation
-		playMode!=playMode;
+		playMode=!playMode;
 		break;
 	case 'Q':
 		psystem->setAlpha(

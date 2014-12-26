@@ -19,7 +19,7 @@
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="com.nvidia.cuda.ide.configuration.debug.378785970" name="Debug" parent="com.nvidia.cuda.ide.configuration.debug">
 					<folderInfo id="com.nvidia.cuda.ide.configuration.debug.378785970." name="/" resourcePath="">
-						<toolChain id="com.nvidia.cuda.tools.toolchain.exe.debug.2140190499" name="CUDA Toolkit 6.5" superClass="com.nvidia.cuda.tools.toolchain.exe.debug">
+						<toolChain id="com.nvidia.cuda.tools.toolchain.exe.debug.2140190499" name="CUDA Toolkit 6.5" resourceTypeBasedDiscovery="true" superClass="com.nvidia.cuda.tools.toolchain.exe.debug">
 							<targetPlatform archList="all" binaryParser="com.nvidia.cuda.ide.elf;com.nvidia.cuda.ide.macho;com.nvidia.cuda.ide.cubin" id="com.nvidia.cuda.ide.targetPlatform.732800153" isAbstract="false" name="Debug Platform" osList="linux,macosx" superClass="com.nvidia.cuda.ide.targetPlatform"/>
 							<builder buildPath="${workspace_loc:/particles}/Debug" id="com.nvidia.cuda.ide.builder.205636483" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CUDA Toolkit 6.5 Builder" superClass="com.nvidia.cuda.ide.builder"/>
 							<tool id="nvcc.compiler.base.511918010" name="NVCC Compiler" superClass="nvcc.compiler.base">
@@ -29,8 +29,9 @@
 								<option id="nvcc.compiler.pic.676854498" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.machine.1670667747" name="Architecture (--machine)" superClass="nvcc.compiler.machine" value="nvcc.compiler.machine64" valueType="enumerated"/>
 								<option id="nvcc.compiler.include.paths.2022731740" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/particles}/common/inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/particles}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/simulator}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/simulator}/common/inc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/simulator}/5_Simulations&quot;"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1274945927" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.269436297" superClass="nvcc.compiler.input.cpp"/>
@@ -72,11 +73,10 @@
 			</storageModule>
 			<storageModule moduleId="com.nvidia.cuda.ide.build.project.ICudaProjectConfiguration">
 				<executable devicelink="false">
-					<sass major="3" minor="0"/>
-					<sass major="3" minor="5"/>
-					<ptx major="3" minor="0"/>
+					<sass major="2" minor="1"/>
+					<ptx major="2" minor="0"/>
 				</executable>
-				<editor-arch major="3" minor="0"/>
+				<editor-arch major="2" minor="1"/>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
@@ -108,9 +108,9 @@
 								<option id="nvcc.compiler.pic.582357597" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.machine.500035324" name="Architecture (--machine)" superClass="nvcc.compiler.machine" value="nvcc.compiler.machine64" valueType="enumerated"/>
 								<option id="nvcc.compiler.include.paths.535158820" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/particles}/5_Simulations&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/particles}/common/inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/particles}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/simulator}/5_Simulations&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${cuda_samples_dir:/simulator}/common/inc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/simulator}&quot;"/>
 								</option>
 								<inputType id="nvcc.compiler.input.cu.1873092222" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.289879689" superClass="nvcc.compiler.input.cpp"/>
@@ -149,9 +149,8 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="com.nvidia.cuda.ide.build.project.ICudaProjectConfiguration">
 				<executable devicelink="false">
-					<sass major="3" minor="0"/>
-					<sass major="3" minor="5"/>
-					<ptx major="3" minor="0"/>
+					<sass major="2" minor="1"/>
+					<ptx major="2" minor="0"/>
 				</executable>
 			</storageModule>
 		</cconfiguration>
@@ -159,26 +158,26 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="particles.com.nvidia.cuda.ide.exe.1157485587" name="Executable" projectType="com.nvidia.cuda.ide.exe"/>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+	<storageModule cpu="Native" moduleId="nsight.localTarget"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/simulator"/>
+		</configuration>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/simulator"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.378785970;com.nvidia.cuda.ide.configuration.debug.378785970.;nvcc.compiler.base.511918010;nvcc.compiler.input.cpp.269436297">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.378785970;com.nvidia.cuda.ide.configuration.debug.378785970.;nvcc.compiler.base.511918010;nvcc.compiler.input.cu.1274945927">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.378785970;com.nvidia.cuda.ide.configuration.debug.378785970.;nvcc.compiler.base.511918010;nvcc.compiler.input.c.1431273613">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.378785970;com.nvidia.cuda.ide.configuration.debug.378785970.;nvcc.compiler.base.511918010;nvcc.compiler.input.cpp.269436297">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
-		</scannerConfigBuildInfo>
-	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule cpu="Native" moduleId="nsight.localTarget"/>
-	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/particles"/>
-		</configuration>
-		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/particles"/>
-		</configuration>
 	</storageModule>
 </cproject>
