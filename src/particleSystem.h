@@ -80,6 +80,7 @@ public:
 	};
 	cutter cutterX,cutterY,cutterZ,cutterBox;
 	void initCutters();
+	void initCutters2();
 
 	int currentCutter=0;
 	bool forwardDirectionCutter;
@@ -220,7 +221,7 @@ public:
 		return (void *) m_cudaColorVBO;
 	}
 
-	void setColliderPos(float3 x) {
+	void setCutterBoxPos(float3 x) {
 		cutterBox.pos=x;
 	}
 
@@ -231,7 +232,7 @@ public:
 	float getParticleRadius() {
 		return particleRadius;
 	}
-	float3 getColliderPos() {
+	float3 getCutterBoxPos() {
 		return cutterBox.pos;
 	}
 

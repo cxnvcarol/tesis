@@ -63,7 +63,6 @@
 
 Gnuplot gp;
 
-
 uint width = 640, height = 480;
 
 // view params
@@ -78,7 +77,7 @@ ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_SPHERES;
 //ParticleRenderer::DisplayMode displayMode = ParticleRenderer::PARTICLE_POINTS; //important!!
 
 int mode = 0;
-bool playMode=false;
+bool playMode = false;
 bool displayEnabled = true;
 bool bPause = false;
 bool displaySliders = false;
@@ -89,7 +88,6 @@ int idleCounter = 0;
 int demoCounter = 0;
 int playCounter = 0;
 const int idleDelay = 2000;
-
 
 enum {
 	M_VIEW = 0, M_MOVE
@@ -125,14 +123,16 @@ ParticleRenderer *renderer = 0;
 
 Model_OBJ obj;
 
-int obj_drawmode=0;
-float obj_alpha=0.4f;
+bool obj_drawmode = false;
+float obj_alpha = 0.4f;
 
 float modelView[16];
 float modelView2[16];
 
 ParamListGL *params;
 ParamListGL *videoPlayer;
+
+void *m_font = (void *)  GLUT_BITMAP_8_BY_13;
 
 // Auto-Verification Code
 const int frameCheckNumber = 4;
@@ -147,26 +147,21 @@ extern "C" void cudaGLInit(int argc, char **argv);
 extern "C" void copyArrayFromDevice(void *host, const void *device,
 		unsigned int vbo, int size);
 
-void showHistogram()
-{
+void showHistogram() {
 	//TODO set color, title, bars, width
-	float widthBar=psystem->width_histogram;
-	int boxwidth=  (int)(widthBar*0.9);
-	gp<<"set boxwidth "<<boxwidth<<"\n";
-	gp<<"set style fill solid 0.5\n";
-	gp<<"set xlabel \"x\"\n";
-	gp<<"set ylabel \"Frequency\"\n";
-	gp<<"plot \"histog.dat\" using 1:2 smooth freq w boxes lc rgb\"green\" notitle\n";
+	float widthBar = psystem->width_histogram;
+	int boxwidth = (int) (widthBar * 0.9);
+	gp << "set boxwidth " << boxwidth << "\n";
+	gp << "set style fill solid 0.5\n";
+	gp << "set xlabel \"x\"\n";
+	gp << "set ylabel \"Frequency\"\n";
+	gp
+			<< "plot \"histog.dat\" using 1:2 smooth freq w boxes lc rgb\"green\" notitle\n";
 	gp.flush();
 }
 
-void changeObjDrawMode()
-{
-	obj_drawmode=(obj_drawmode+1)%4;
-	if(obj_drawmode==3)
-		obj_alpha=0;
-	else if(obj_drawmode==0)
-		obj_alpha=0.4f;
+void changeObjDrawMode() {
+	obj_drawmode = !obj_drawmode;
 }
 
 void colorConfig(string configFilePath) {
@@ -385,61 +380,113 @@ void glArrayBox(float w, float h, float d) {
 
 	glEnd();
 }
-void paintCollider() {
+void paintColorBoxScale(const char *nameVar) {
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	beginWinCoords();
+
+	glBegin(GL_QUADS);
+
+	glColor3f(1.0f, 0.0f, 0.0f); // make this vertex red
+	float gradHeight = 300, gradWidth = 50;
+	glVertex2f(width - gradWidth, gradHeight);
+	glVertex2f(width - 5, gradHeight);
+	glColor3f(1.0f, 1.0f, 0.0f); // make this vertex yellow
+	glVertex2f(width - 5, 20);
+	glVertex2f(width - gradWidth, 20);
+	glEnd();
+
+	int len = (int) strlen(nameVar)*8;
+
+	glPrint(width - len, 15,nameVar,m_font);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	len = (int) strlen("300")*8;
+
+	glPrint(width - gradWidth-len, 20+10,"300",m_font);
+	char * testing=(char*)calloc(10,sizeof(char));
+	testing="0oo";
+	len = (int) strlen(testing)*8;
+	glPrint(width - gradWidth-len, gradHeight+10,testing,m_font);
+
+	endWinCoords();
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+void paintBoxCutter() {
 
 	glPushMatrix();
-	float3 p = psystem->getColliderPos();
+	float3 p = psystem->getCutterBoxPos();
 	glTranslatef(p.x, p.y, p.z);
 	glColor3f(1.0, 0.0, 0.0);
 	float3 tamSel = psystem->getSelectSize();
 	glArrayBox(tamSel.x, tamSel.y, tamSel.z);
 
-
 	glPopMatrix();
 
 }
-void paintPosition(float3 pos)
-{
+void paintPosition(float3 pos) {
 	glPushMatrix();
 	float3 p2 = pos;
 	glTranslatef(p2.x, p2.y, p2.z);
 	glColor3f(1.0, 1.0, 0.0);
-	float3 tamSel = make_float3(0.1,0.1,0.1);
-	glutSolidCylinder(tamSel.x, tamSel.y, 10,10);
+	float3 tamSel = make_float3(0.1, 0.1, 0.1);
+	glutSolidCylinder(tamSel.x, tamSel.y, 10, 10);
 
-
-	float3 p=pos;
-	p.x+=0.2f;
-	p.z-=3;
+	float3 p = pos;
+	p.x += 0.2f;
+	p.z -= 3;
 
 	glBegin(GL_LINES);
 	glVertex3f(p.x, p.y, -11);
 	glVertex3f(p.x, p.y, -3);
 
 	glVertex3f(p.x, -4, p.z);
-	glVertex3f(p.x, 4,p.z);
+	glVertex3f(p.x, 4, p.z);
 
 	glVertex3f(-4, p.y, p.z);
 	glVertex3f(4, p.y, p.z);
 
-		glEnd();
+	glEnd();
 
-
-		glPopMatrix();
+	glPopMatrix();
 
 }
-void paintCutter(float3 p,float3 tamSel)
-{
+void paintCutter(float3 p, float3 tamSel) {
 	glPushMatrix();
-		glTranslatef(p.x, p.y, p.z);
-		glColor3f(0.0, 1.0, 1.0);
-		glArrayBox(tamSel.x, tamSel.y, tamSel.z);
+	glTranslatef(p.x, p.y, p.z);
+	glColor3f(0.0, 1.0, 1.0);
+	glArrayBox(tamSel.x, tamSel.y, tamSel.z);
+	glPopMatrix();
+
+}
+void paintAxis() {
+	glPushMatrix();
+
+	float widln = 0;
+	glGetFloatv(GL_LINE_WIDTH, &widln);
+	glLineWidth(widln * 5);
+	glBegin(GL_LINES);
+	glColor3f(1.0, 0.0, 0.0);
+	glVertex3f(-1, -1, -1);
+	glVertex3f(-0.5f, -1, -1);
+
+	glColor3f(0, 1.0, 0.0);
+	glVertex3f(-1, -1, -1);
+	glVertex3f(-1, -0.5f, -1);
+
+	glColor3f(0, 0.0, 1.0);
+	glVertex3f(-1, -1, -1);
+	glVertex3f(-1, -1, -0.5f);
+
+	glEnd();
+	glLineWidth(widln);
 	glPopMatrix();
 
 }
 void display() {
 	sdkStartTimer(&timer);
-
 
 	// update the simulation
 	renderer->setVertexBuffer(psystem->getCurrentReadBuffer(),
@@ -468,17 +515,16 @@ void display() {
 	glColor3f(1.0, 1.0, 1.0);
 	glutWireCube(2.0);
 
-	// collider is the selector box
-	paintCollider();
-	paintCutter(psystem->cutterX.pos,psystem->cutterX.size);
-	paintCutter(psystem->cutterY.pos,psystem->cutterY.size);
-	paintCutter(psystem->cutterZ.pos,psystem->cutterZ.size);
+	paintAxis();
+
+	paintBoxCutter();
+	paintCutter(psystem->cutterX.pos, psystem->cutterX.size);
+	paintCutter(psystem->cutterY.pos, psystem->cutterY.size);
+	paintCutter(psystem->cutterZ.pos, psystem->cutterZ.size);
 
 	//paint wireframe
-
-	if(obj_alpha>0)
-		obj.DrawMode(obj_drawmode,obj_alpha);
-
+	if (obj_alpha > 0 && obj_drawmode)
+		obj.DrawMode(4, obj_alpha); //4 is for triangles
 
 	if (renderer && displayEnabled) {
 		renderer->display(displayMode);
@@ -503,25 +549,26 @@ void display() {
 		glEnable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
+	paintColorBoxScale("Temperature");
 
 	glMatrixMode(GL_MODELVIEW);
-	 glViewport(0,height*3/4, width*1/4,height*1/4);
-	 glLoadIdentity();
+	glViewport(0, height * 3 / 4, width * 1 / 4, height * 1 / 4);
+	glLoadIdentity();
 
-	 //glClearColor(0,0,0.5,1);
+	//glClearColor(0,0,0.5,1);
 
-		glTranslatef(0.2f,0,-3);
+	glTranslatef(0.2f, 0, -3);
 
-		glGetFloatv(GL_MODELVIEW_MATRIX, modelView2);
+	glGetFloatv(GL_MODELVIEW_MATRIX, modelView2);
 
-		// cube
-		glColor3f(1.0, 1.0, 1.0);
-		glutWireCube(2.0);
+	// cube
+	glColor3f(1.0, 1.0, 1.0);
+	glutWireCube(2.0);
 
-		//obj.DrawMode(GL_POINTS,0.1f);
-		paintPosition(make_float3(camera_trans_lag[0],camera_trans_lag[1],camera_trans_lag[2]));
-
-
+	//obj.DrawMode(GL_POINTS,0.1f);
+	paintPosition(
+			make_float3(camera_trans_lag[0], camera_trans_lag[1],
+					camera_trans_lag[2]));
 
 	sdkStopTimer(&timer);
 
@@ -534,7 +581,6 @@ void display() {
 inline float frand() {
 	return rand() / (float) RAND_MAX;
 }
-
 
 void reshape(int w, int h) {
 	width = w;
@@ -660,7 +706,7 @@ void motion(int x, int y) {
 
 	case M_MOVE: {
 		float translateSpeed = 0.003f;
-		float3 p = psystem->getColliderPos();
+		float3 p = psystem->getCutterBoxPos();
 
 		if (buttonState == 1) {
 			float v[3], r[3];
@@ -704,7 +750,7 @@ void motion(int x, int y) {
 
 		}
 
-		psystem->setColliderPos(p);
+		psystem->setCutterBoxPos(p);
 	}
 		break;
 	}
@@ -720,9 +766,9 @@ void motion(int x, int y) {
 
 // commented out to remove unused parameter warnings in Linux
 void key(unsigned char k, int /*x*/, int /*y*/) {
-	char kMayus=k;
-	if(k>96)
-		kMayus=k-32;//toUpperCase()
+	char kMayus = k;
+	if (k > 96)
+		kMayus = k - 32; //toUpperCase()
 	switch (kMayus) {
 	//custom cases:
 	case 'R':
@@ -738,7 +784,6 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
 			displayMode = ParticleRenderer::PARTICLE_SPHERES;
 		}
-		//TODO case of velocity
 		break;
 
 	case 'C':
@@ -746,21 +791,21 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		psystem->updateColor();
 		break;
 
-	case 'J':
+	case 'T':
 		psystem->toggleDisplayLow();
 		break;
-	case 'K':
+	case 'Y':
 		psystem->toggleDisplayMiddle();
 		break;
-	case 'L':
+	case 'U':
 		psystem->toggleDisplayHigh();
 		break;
 	case 'O':
 		changeObjDrawMode();
 		break;
 
-	case 'P'://play and pause simulation
-		playMode=!playMode;
+	case 'P': //play and pause simulation
+		playMode = !playMode;
 		break;
 	case 'Q':
 		psystem->setAlpha(
@@ -769,6 +814,14 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 	case 'A':
 		psystem->setAlpha(
 				psystem->getAlpha() <= 0 ? 0.0f : psystem->getAlpha() - 0.1f);
+		break;
+
+	case 'I':
+		obj_alpha = obj_alpha >= 1 ? 1.0f : obj_alpha + 0.1f;
+
+		break;
+	case 'K':
+		obj_alpha = obj_alpha <= 0 ? 0 : obj_alpha - 0.1f;
 		break;
 
 	case 'V':
@@ -782,9 +835,9 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 	case 'M':
 		displayMode = (ParticleRenderer::DisplayMode) ((displayMode + 1)
 				% ParticleRenderer::PARTICLE_NUM_MODES);
-		if(displayMode==ParticleRenderer::PARTICLE_ARROWS&&psystem->currentVariable!=ParticleSystem::VAR_VELOCITY)
-		{
-			key('M',0,0);
+		if (displayMode == ParticleRenderer::PARTICLE_ARROWS
+				&& psystem->currentVariable != ParticleSystem::VAR_VELOCITY) {
+			key('M', 0, 0);
 		}
 		break;
 	case 'D':
@@ -797,10 +850,8 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		break;
 
 	case '\r':
-		psystem->demoCutting=!psystem->demoCutting;
+		psystem->demoCutting = !psystem->demoCutting;
 		break;
-
-
 
 	case '\033':
 		// cudaDeviceReset causes the driver to clean up all state. While
@@ -809,7 +860,7 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 		// profiled. Calling cudaDeviceReset causes all profile data to be
 		// flushed before the application exits
 		cudaDeviceReset();
-		gp<<"exit\n";
+		gp << "exit\n";
 		exit(EXIT_SUCCESS);
 		break;
 	}
@@ -819,59 +870,54 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 	glutPostRedisplay();
 }
 
-
 void special(int k, int x, int y) {
-
 
 	if (displaySliders) {
 		params->Special(k, x, y);
-	}
-	else
-	{
-		switch(k)
-			{
+	} else {
+		switch (k) {
 
-			case GLUT_KEY_UP:
-				psystem->forwardDirectionCutter=true;
-				psystem->advanceCutter();
-				break;
-			case GLUT_KEY_DOWN:
-				psystem->forwardDirectionCutter=false;
-				psystem->advanceCutter();
-				break;
-			case GLUT_KEY_LEFT:
-				psystem->rewind();
-				break;
+		case GLUT_KEY_UP:
+			psystem->forwardDirectionCutter = true;
+			psystem->advanceCutter();
+			break;
+		case GLUT_KEY_DOWN:
+			psystem->forwardDirectionCutter = false;
+			psystem->advanceCutter();
+			break;
+		case GLUT_KEY_LEFT:
+			psystem->rewind();
+			break;
 
-			case GLUT_KEY_RIGHT:
-				psystem->forward();
-				break;
-			case GLUT_KEY_F1:
-				psystem->initCutters();
-				psystem->currentCutter=0;
-				psystem->demoCutting=true;
-				psystem->clipped=true;
-				break;
-			case GLUT_KEY_F2:
-				psystem->initCutters();
-				psystem->currentCutter=1;
-				psystem->demoCutting=true;
-				psystem->clipped=true;
-				break;
-			case GLUT_KEY_F3:
-				psystem->initCutters();
-				psystem->currentCutter=2;
-				psystem->demoCutting=true;
-				psystem->clipped=true;
-				break;
-			case GLUT_KEY_F4:
-				psystem->demoCutting=false;
-				psystem->initCutters();
-				psystem->enableCutting=false;
-				psystem->clipped=false;
-				psystem->updateColor();
-				break;
-			}
+		case GLUT_KEY_RIGHT:
+			psystem->forward();
+			break;
+		case GLUT_KEY_F1:
+			psystem->currentCutter = 0;
+			psystem->initCutters();
+			psystem->demoCutting = true;
+			psystem->clipped = true;
+			break;
+		case GLUT_KEY_F2:
+			psystem->currentCutter = 1;
+			psystem->initCutters();
+			psystem->demoCutting = true;
+			psystem->clipped = true;
+			break;
+		case GLUT_KEY_F3:
+			psystem->currentCutter = 2;
+			psystem->initCutters();
+			psystem->demoCutting = true;
+			psystem->clipped = true;
+			break;
+		case GLUT_KEY_F4:
+			psystem->demoCutting = false;
+			psystem->initCutters();
+			psystem->enableCutting = false;
+			psystem->clipped = false;
+			psystem->updateColor();
+			break;
+		}
 	}
 
 	demoMode = false;
@@ -884,23 +930,21 @@ void idle(void) {
 		//        printf("Entering demo mode\n");
 	}
 
-	if(psystem->demoCutting)
-	{
+	if (psystem->demoCutting) {
 		demoCounter++;
 		if (demoCounter++ > 20) {
 
 			psystem->advanceCutter();
-			demoCounter=0;
+			demoCounter = 0;
 		}
 	}
-	if(playMode)
-	{
+	if (playMode) {
 		playCounter++;
-				if (playCounter++ > 15) {
+		if (playCounter++ > 15) {
 
-					psystem->forward();
-					playCounter=0;
-				}
+			psystem->forward();
+			playCounter = 0;
+		}
 
 	}
 
@@ -910,13 +954,6 @@ void idle(void) {
 void initParams() {
 	if (g_refFile) {
 		timestep = 0.0f;
-		damping = 0.0f;
-		gravity = 0.0f;
-		ballr = 1;
-		collideSpring = 0.0f;
-		collideDamping = 0.0f;
-		collideShear = 0.0f;
-		collideAttraction = 0.0f;
 
 	} else {
 
@@ -925,27 +962,6 @@ void initParams() {
 		params->AddParam(
 				new Param<float>("time step", timestep, 0.0f, 1.0f, 0.01f,
 						&timestep));
-		//		params->AddParam(
-		//				new Param<float>("damping", damping, 0.0f, 1.0f, 0.001f,
-		//						&damping));
-		//		params->AddParam(
-		//				new Param<float>("gravity", gravity, 0.0f, 0.001f, 0.0001f,
-		//						&gravity));
-		//		params->AddParam(
-		//				new Param<int>("ball radius", ballr, 1, 20, 1, &ballr));
-		//
-		//		params->AddParam(
-		//				new Param<float>("collide spring", collideSpring, 0.0f, 1.0f,
-		//						0.001f, &collideSpring));
-		//		params->AddParam(
-		//				new Param<float>("collide damping", collideDamping, 0.0f, 0.1f,
-		//						0.001f, &collideDamping));
-		//		params->AddParam(
-		//				new Param<float>("collide shear", collideShear, 0.0f, 0.1f,
-		//						0.001f, &collideShear));
-		//		params->AddParam(
-		//				new Param<float>("collide attract", collideAttraction, 0.0f,
-		//						0.1f, 0.001f, &collideAttraction));
 		params->AddParam(
 				new Param<int>("range color", rangeColor, 0, 256, 200,
 						&rangeColor));
@@ -974,9 +990,6 @@ void initMenus() {
 	glutAddMenuEntry("Move cursor mode [m]", 'm');
 	glutAddMenuEntry("Reset camera [s]", 's');
 	glutAddMenuEntry("Change active variable [l]", 'l');
-	//glutAddMenuEntry("Toggle point rendering [p]", 'p');
-	//glutAddMenuEntry("Toggle animation [' ']", ' ');
-	//glutAddMenuEntry("Step animation [ret]", 13);
 	glutAddMenuEntry("Toggle sliders [d]", 'd');
 	glutAddMenuEntry("Quit (esc)", '\033');
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
@@ -1040,7 +1053,7 @@ int main(int argc, char **argv) {
 		cudaGLInit(argc, argv);
 	}
 
-		if (checkCmdLineFlag(argc, (const char **) argv, "datafile")) {
+	if (checkCmdLineFlag(argc, (const char **) argv, "datafile")) {
 		char* pth;
 		getCmdLineArgumentString(argc, (const char **) argv, "datafile", &pth);
 		fflush(stdout);
@@ -1064,7 +1077,7 @@ int main(int argc, char **argv) {
 
 	printf("\nantes del obj\n");
 	fflush(stdout);
-	obj.Load(OBJ_PATH,psystem->maxTotal);
+	obj.Load(OBJ_PATH, psystem->maxTotal);
 	printf("\nvolumen cargado\n");
 	fflush(stdout);
 

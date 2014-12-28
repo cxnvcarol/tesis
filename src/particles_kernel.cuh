@@ -23,6 +23,4 @@
 #include "vector_types.h"
 typedef unsigned int uint;
 
-// simulation parameters
-
 #endif

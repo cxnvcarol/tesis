@@ -31,7 +31,6 @@ void main()
 	gl_Position = gl_ModelViewProjectionMatrix * vec4(gl_Vertex.xyz, 1.0);
 
 	gl_FrontColor = gl_Color;
-	//gl_FrontColor = vec4(0,1,0,1);
 }
 );
 
@@ -39,23 +38,18 @@ void main()
 const char *spherePixelShader = STRINGIFY(
 		void main()
 {
-	//const vec3 lightDir = vec3(0.577, 0.577, 0.577);
-
-	// calculate normal from texture coordinates
 	vec3 N;
 	N.xy = gl_TexCoord[0].xy*vec2(2.0, -2.0) + vec2(-1.0, 1.0);
 	float mag = dot(N.xy, N.xy);
 	//
 	if (mag > 1.0) discard;   // kill pixels outside circle
-	//
-	N.z = sqrt(1.0-mag);
-	//
-	//    // calculate lighting
-	//float diffuse = max(0.0, dot(lightDir, N));
-	//    float diffuse=1;
 
-	gl_FragColor = gl_Color;//*diffuse;//diffuse=1
-	//gl_FragColor = vec4(0,1,0,1);
+	N.z = sqrt(1.0-mag);
+
+	const vec3 lightDir = vec3(0.577, 0.577, 0.577);
+	float diffuse = max(0.0, dot(lightDir, N));
+	//gl_FragColor = gl_Color * diffuse;
+	gl_FragColor = gl_Color;
 
 }
 );
@@ -70,11 +64,7 @@ const char *vertexArrowShader=STRINGIFY(
 const char *fragmentArrowShader=GLSL(120,
 		void main()
 {
-
 	gl_FragColor = gl_Color;
-
-
-	//gl_FragColor=vec4(0,1,0,1);
 }
 );
 
@@ -88,18 +78,10 @@ void main()
 	for(int i=0; i<2; i++)
 	{
 		gl_Position = gl_in[i].gl_Position;
-
 		gl_FrontColor = gl_FrontColorIn[i];
-
-
 		EmitVertex();
-
 	}
-
 	EndPrimitive();
-
-
-
 	vec3 a=gl_in[0].gl_Position.xyz;
 	vec3 b=gl_in[1].gl_Position.xyz;
 	vec3 t=normalize(cross(a,b))*0.5;

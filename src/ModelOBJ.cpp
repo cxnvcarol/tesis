@@ -194,7 +194,7 @@ void Model_OBJ::DrawMode(unsigned int mode, float alpha) {
 	glPushMatrix();
 	float currentColor[4];
 	glGetFloatv(GL_CURRENT_COLOR,currentColor);
-	glColor4f(1.0, 0.0, 0.0, alpha);
+	glColor4f(0.5f, 0.5f, 0.5f, alpha);
 
 	glEnableClientState(GL_VERTEX_ARRAY); // Enable vertex arrays
 	glEnableClientState(GL_NORMAL_ARRAY); // Enable normal arrays

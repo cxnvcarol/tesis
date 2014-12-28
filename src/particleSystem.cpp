@@ -110,19 +110,13 @@ ParticleSystem::ParticleSystem(uint3 gridSize, bool bUseOpenGL) :
 	gradientFinalColor = new float[3] { 1, 0, 0 }; //{1,0,0};//red default
 
 	m_numGridCells = m_gridSize.x * m_gridSize.y * m_gridSize.z;
-	//    float3 worldSize = make_float3(2.0f, 2.0f, 2.0f);
 
 	//TODO set radius smarter
 	particleRadius = 1.0f / 640.0f * 3;
-
-	//m_params.particleRadius = 1.0f / 64000.0f;
 	cutterBox.pos = make_float3(-1.2f, -0.8f, 0.8f);
 	cutterBox.size = make_float3(0.4f, 0.4f, 0.4f);
 
-	initCutters();
-	enableCutting=false;
-
-	//    m_params.cellSize = make_float3(worldSize.x / m_gridSize.x, worldSize.y / m_gridSize.y, worldSize.z / m_gridSize.z);
+	initCutters2();
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -145,6 +139,29 @@ inline float lerp(float a, float b, float t) {
 
 
 void ParticleSystem::initCutters()
+{
+	cutterX.pos=make_float3(1,0,0);
+	cutterX.size=make_float3(0.05,2,2);
+	cutterY.pos=make_float3(0,1,0);
+	cutterY.size=make_float3(2,0.05,2);
+	cutterZ.pos=make_float3(0,0,1);
+	cutterZ.size=make_float3(2,2,0.05);
+
+	switch(currentCutter)
+	{
+	case 0:
+		cutterX.pos=make_float3(0,0,0);
+		break;
+	case 1:
+		cutterY.pos=make_float3(0,0,0);
+		break;
+	case 2:
+		cutterZ.pos=make_float3(0,0,0);
+		break;
+	}
+	enableCutting=true;
+}
+void ParticleSystem::initCutters2()
 	{
 		cutterX.pos=make_float3(1,0,0);
 		cutterX.size=make_float3(0.05,2,2);
@@ -152,21 +169,7 @@ void ParticleSystem::initCutters()
 		cutterY.size=make_float3(2,0.05,2);
 		cutterZ.pos=make_float3(0,0,1);
 		cutterZ.size=make_float3(2,2,0.05);
-		enableCutting=true;
 	}
-void ParticleSystem::colorVariable(int index, float *r) {
-
-	if (currentVariable == VAR_TEMPERATURE) {
-		r[2] = (temp[index] - tmin) / (tmax - tmin);
-		r[1] = r[2];
-		r[0] = r[2];
-	} else {
-		r[0] = 0;
-		r[1] = (pressureArray[index] - pmin) / (pmax - pmin);
-		r[2] = 0;
-	}
-
-}
 
 int ParticleSystem::colorVar(int index, float *r) {
 
@@ -305,7 +308,7 @@ void ParticleSystem::_initialize(int numParticles) {
 
 	m_histogram = new uint[m_numberHistogramIntervals];
 	// allocate host storage
-	m_hPos = new float[m_numParticles * 8];//(float*)calloc(m_numParticles,8*sizeof(float));
+	m_hPos = new float[m_numParticles * 8];
 	m_hVel = new float[m_numParticles * 8];
 	memset(m_hPos, 0, m_numParticles * 8 * sizeof(float));
 	memset(m_hVel, 0, m_numParticles *8* sizeof(float));
@@ -324,8 +327,6 @@ void ParticleSystem::_initialize(int numParticles) {
 		checkCudaErrors(cudaMalloc((void ** )&m_cudaPosVBO, memSize));
 
 	}
-
-	//allocateArray((void **) &m_dVel, memSize);
 
 	allocateArray((void **) &m_dSortedPos, memSize);
 	allocateArray((void **) &m_dSortedVel, memSize);
@@ -404,8 +405,6 @@ void ParticleSystem::updateFrame() {
 	fflush(stdout);
 	printf("\new frame: %d\n", currentFrame);
 	fflush(stdout);
-	//printf("frameTempPointer:: *p:%f",*(frames[currentFrame].pressurePointer));
-	//fflush(stdout);
 	velArray = frames[currentFrame].velocityPointer;
 	pressureArray = frames[currentFrame].pressurePointer;
 	temp = frames[currentFrame].temperaturePointer;
@@ -487,6 +486,29 @@ void ParticleSystem::updateColor() {
 							break;
 
 			}
+			float3 leftDownBack2 = cutterBox.pos - cutterBox.size / 2;
+			float3 rightUpFront2 = cutterBox.pos + cutterBox.size / 2;
+
+			bool intersecX=leftDownBack.x<=rightUpFront2.x&&leftDownBack2.x<=rightUpFront.x;
+			bool intersecY=leftDownBack.y<=rightUpFront2.y&&leftDownBack2.y<=rightUpFront.y;
+			bool intersecZ=leftDownBack.z<=rightUpFront2.z&&leftDownBack2.z<=rightUpFront.z;
+			//printf("\n intersections: (%d,%d,%d)\n",intersecX,intersecY,intersecZ);
+			if(intersecX&&intersecY&&intersecZ)
+			{
+				if(leftDownBack.x<leftDownBack2.x)
+					leftDownBack.x=leftDownBack2.x;
+				if(leftDownBack.y<leftDownBack2.y)
+					leftDownBack.y=leftDownBack2.y;
+				if(leftDownBack.z<leftDownBack2.z)
+					leftDownBack.z=leftDownBack2.z;
+
+				if(rightUpFront.x>rightUpFront2.x)
+					rightUpFront.x=rightUpFront2.x;
+				if(rightUpFront.y>rightUpFront2.y)
+					rightUpFront.y=rightUpFront2.y;
+				if(rightUpFront.z>rightUpFront2.z)
+					rightUpFront.z=rightUpFront2.z;
+			}
 
 		}
 		else{
@@ -500,7 +522,7 @@ void ParticleSystem::updateColor() {
 					&& m_hPos[i * 4 + 1] < rightUpFront.y
 					&& m_hPos[i * 4 + 2] > leftDownBack.z
 					&& m_hPos[i * 4 + 2] < rightUpFront.z) {
-				int rango=colorVar(i, ptr);	//colorVariable(i, ptr);
+				int rango=colorVar(i, ptr);
 				ptr += 3;
 				switch(rango)
 				{
@@ -794,10 +816,6 @@ void ParticleSystem::loadSimulationData(string fileP) {
 			}
 			tempVar++;
 		}
-		//		if(temperature>tempMax)
-		//		  tempMax=temperature;
-		//		if(temperature<tempMin)
-		//		  tempMin=temperature;
 		if (temperature > tmax)
 			tmax = temperature;
 		if (temperature < tmin) {
@@ -846,15 +864,15 @@ void ParticleSystem::loadSimulationData(string fileP) {
 		velArray[tam].direction[2] = velZ;
 		velArray[tam].magnitude = velMag;
 		tam++;
-		//		try{//skip data to accelerate rendering
-		//			for (int var = 0; var < 10; ++var) {
-		//				std::getline(data,line);
-		//			}
-		//
-		//		}
-		//		catch (int e) {
-		//
-		//		}
+		try{//skip data to accelerate rendering
+			for (int var = 0; var < 15; ++var) {
+				//std::getline(data,line);
+			}
+
+		}
+		catch (int e) {
+
+		}
 	}
 	if (tam > tamMax)
 		tamMax = tam;		//last time read

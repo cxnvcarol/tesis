@@ -81,15 +81,10 @@ void ParticleRenderer::_drawPoints()
             glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_colorVBO);
             glColorPointer(4, GL_FLOAT, 0, 0);
             glEnableClientState(GL_COLOR_ARRAY);
-            //glEnableClientState(GL_NORMAL_ARRAY);
         }
 
 
         glDrawArrays(GL_POINTS, 0, m_numParticles);
-        //glDrawArrays(GL_LINES, 0, m_numParticles);//first aprox for arrows
-
-        //glDrawArrays(GL_TRIANGLES, 0, m_numParticles);
-
         glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_COLOR_ARRAY);
