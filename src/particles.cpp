@@ -65,6 +65,13 @@ Gnuplot gp;
 
 uint width = 640, height = 480;
 
+// Scale reference:
+
+int lenCol;
+float** coloresScale;
+float* valoresScale;
+char* currentVarName;
+
 // view params
 int ox, oy;
 int buttonState = 0;
@@ -147,6 +154,16 @@ extern "C" void cudaGLInit(int argc, char **argv);
 extern "C" void copyArrayFromDevice(void *host, const void *device,
 		unsigned int vbo, int size);
 
+
+
+void refreshLegend()
+{
+	lenCol=psystem->totalValuesScale;
+	coloresScale=psystem->getColorsScale();
+	currentVarName=psystem->getCurrentVarName();
+	valoresScale=psystem->getValuesScale();
+}
+
 void showHistogram() {
 	//TODO set color, title, bars, width
 	float widthBar = psystem->width_histogram;
@@ -155,8 +172,7 @@ void showHistogram() {
 	gp << "set style fill solid 0.5\n";
 	gp << "set xlabel \"x\"\n";
 	gp << "set ylabel \"Frequency\"\n";
-	gp
-			<< "plot \"histog.dat\" using 1:2 smooth freq w boxes lc rgb\"green\" notitle\n";
+	gp << "plot \"histog.dat\" using 1:2 smooth freq w boxes lc rgb\"green\" notitle\n";
 	gp.flush();
 }
 
@@ -380,33 +396,51 @@ void glArrayBox(float w, float h, float d) {
 
 	glEnd();
 }
-void paintColorBoxScale(const char *nameVar) {
+void paintColorBoxScale(const char *nameVar, float** colors,float* values,int length) {
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	beginWinCoords();
 
-	glBegin(GL_QUADS);
+	float heightTotal=300, diffTotal=values[length-1]-values[0];
+	float gradHeight = heightTotal/(length-1), gradWidth = 50;
+	int len=0;
 
-	glColor3f(1.0f, 0.0f, 0.0f); // make this vertex red
-	float gradHeight = 300, gradWidth = 50;
-	glVertex2f(width - gradWidth, gradHeight);
-	glVertex2f(width - 5, gradHeight);
-	glColor3f(1.0f, 1.0f, 0.0f); // make this vertex yellow
-	glVertex2f(width - 5, 20);
-	glVertex2f(width - gradWidth, 20);
-	glEnd();
+	float posY=heightTotal+20;
+	char * testing=(char*)calloc(20,sizeof(char));
+	int var=0;
+	for (var = 0; var < length-1; ++var) {
+		gradHeight=(values[var+1]-values[var])*heightTotal/diffTotal;
+		float * col1=colors[var];
+		float * col2=colors[var+1];
+		glBegin(GL_QUADS);
+		//glColor3f(1.0f, 0.0f, 0.0f); // make this vertex red
+		glColor3fv(col1);
+		glVertex2f(width - gradWidth, posY);
+		glVertex2f(width - 5, posY);
+		//glColor3f(1.0f, 1.0f, 0.0f); // make this vertex yellow
+		glColor3fv(col2);
+		glVertex2f(width - 5, posY-gradHeight);
+		glVertex2f(width - gradWidth, posY-gradHeight);
+		glEnd();
 
-	int len = (int) strlen(nameVar)*8;
+		glColor3f(1.0f, 1.0f, 1.0f);
+		//glColor3f(0,0,0);
 
-	glPrint(width - len, 15,nameVar,m_font);
-	glColor3f(1.0f, 1.0f, 1.0f);
-	len = (int) strlen("300")*8;
+		testing=(char*)calloc(20,sizeof(char));
+		snprintf(testing,20,"%.1f",values[var]);
+		len = (int) strlen(testing)*8;
+		glPrint(width - gradWidth-len, posY+10,testing,m_font);
+		//glPrint(width - gradWidth, posY+10,testing,m_font);
 
-	glPrint(width - gradWidth-len, 20+10,"300",m_font);
-	char * testing=(char*)calloc(10,sizeof(char));
-	testing="0oo";
+		posY-=gradHeight;
+	}
+	testing=(char*)calloc(20,sizeof(char));
+	snprintf(testing,20,"%.2f",values[var]);
 	len = (int) strlen(testing)*8;
-	glPrint(width - gradWidth-len, gradHeight+10,testing,m_font);
+	glPrint(width - gradWidth-len, posY+10,testing,m_font);
+
+	len = (int) strlen(nameVar)*8;
+	glPrint(width - len, 15,nameVar,m_font);
 
 	endWinCoords();
 
@@ -549,7 +583,8 @@ void display() {
 		glEnable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	paintColorBoxScale("Temperature");
+
+	paintColorBoxScale(currentVarName,coloresScale,valoresScale,lenCol);
 
 	glMatrixMode(GL_MODELVIEW);
 	glViewport(0, height * 3 / 4, width * 1 / 4, height * 1 / 4);
@@ -784,6 +819,8 @@ void key(unsigned char k, int /*x*/, int /*y*/) {
 			psystem->reset(ParticleSystem::CONFIG_SIMULATION_DATA);
 			displayMode = ParticleRenderer::PARTICLE_SPHERES;
 		}
+		refreshLegend();
+
 		break;
 
 	case 'C':
@@ -912,7 +949,7 @@ void special(int k, int x, int y) {
 			break;
 		case GLUT_KEY_F4:
 			psystem->demoCutting = false;
-			psystem->initCutters();
+			psystem->initCutters2();
 			psystem->enableCutting = false;
 			psystem->clipped = false;
 			psystem->updateColor();
@@ -1074,6 +1111,9 @@ int main(int argc, char **argv) {
 		colorConfig(DEFAULT_COLOR_CONFIG);
 	}
 	initParams();
+
+	refreshLegend();
+
 
 	printf("\nantes del obj\n");
 	fflush(stdout);

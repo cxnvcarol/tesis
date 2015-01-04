@@ -48,8 +48,8 @@ const char *spherePixelShader = STRINGIFY(
 
 	const vec3 lightDir = vec3(0.577, 0.577, 0.577);
 	float diffuse = max(0.0, dot(lightDir, N));
-	//gl_FragColor = gl_Color * diffuse;
-	gl_FragColor = gl_Color;
+	gl_FragColor = gl_Color * diffuse;
+	//gl_FragColor = gl_Color;
 
 }
 );

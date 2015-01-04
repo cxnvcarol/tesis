@@ -92,6 +92,47 @@ public:
 	void rewindCutterZ();
 	void advanceCutter();
 
+
+	int totalValuesScale=4;
+	char* getCurrentVarName()
+	{
+		switch(currentVariable)
+		{
+		case 0:
+			return "Temperature(K)";
+		case 1:
+			return "Pressure(Pa)";
+		case 2:
+			return "Velocity(m/s)";
+		}
+		return "";
+	}
+	float** getColorsScale()
+	{
+		float** coloresScale=(float**)calloc(totalValuesScale,sizeof(float*));
+		printf("coloresscaledone\n");
+		fflush(stdout);
+		coloresScale[0]=lowColor;
+		coloresScale[1]=gradientInitialColor;
+		coloresScale[2]=gradientFinalColor;
+		coloresScale[3]=highColor;
+		return coloresScale;
+
+	}
+	float* getValuesScale()
+	{
+		switch(currentVariable)
+		{
+		case 0:
+			return new float[4]{tmin,n_tmin,n_tmax,tmax};
+		case 1:
+			return new float[4]{pmin,n_pmin,n_pmax,pmax};
+		case 2:
+			return new float[4]{vmin,n_vmin,n_vmax,vmax};
+		}
+		return {};
+
+	}
 	//TODO quitar después, es temporal
 	void initialSimulationColor();
 	void updateColor();

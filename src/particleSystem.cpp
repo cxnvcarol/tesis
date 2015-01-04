@@ -752,7 +752,19 @@ void ParticleSystem::loadSimulationData(string fileP) {
 	std::cout << line << "\n";
 	float lasttime = -1;
 	int tam = 0;
-	while (std::getline(data, line)) {
+
+//	try{//skip data to accelerate rendering
+//				for (int var = 0; var < 150000; ++var) {
+//					std::getline(data,line);
+//				}
+//
+//			}
+//			catch (int e) {
+//
+//			}
+//			int tempCount=0;
+	while (std::getline(data, line)){//&&tempCount<400000) {
+		//tempCount++;
 		if (tam < 2)
 			std::cout << line << "\n";
 
