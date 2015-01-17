@@ -33,6 +33,7 @@ class ParticleRenderer
         {
             PARTICLE_POINTS,
             PARTICLE_SPHERES,
+            PARTICLE_FLAT_SPHERES,
             PARTICLE_ARROWS,
             PARTICLE_NUM_MODES
         };
@@ -74,6 +75,7 @@ class ParticleRenderer
         int m_window_w, m_window_h;
 
         GLuint m_program;
+        GLuint m_program_flat;
         GLuint m_programVectorial;
 
         GLuint m_vbo;

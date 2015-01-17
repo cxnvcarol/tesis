@@ -53,6 +53,25 @@ const char *spherePixelShader = STRINGIFY(
 
 }
 );
+
+const char *sphereFlatPixelShader = STRINGIFY(
+		void main()
+{
+	vec3 N;
+	N.xy = gl_TexCoord[0].xy*vec2(2.0, -2.0) + vec2(-1.0, 1.0);
+	float mag = dot(N.xy, N.xy);
+	//
+	if (mag > 1.0) discard;   // kill pixels outside circle
+
+	N.z = sqrt(1.0-mag);
+
+	const vec3 lightDir = vec3(0.577, 0.577, 0.577);
+	float diffuse = max(0.0, dot(lightDir, N));
+	gl_FragColor = gl_Color;
+	//gl_FragColor = gl_Color;
+
+}
+);
 const char *vertexArrowShader=STRINGIFY(
 		void main()
 {

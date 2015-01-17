@@ -162,17 +162,22 @@ void refreshLegend()
 	coloresScale=psystem->getColorsScale();
 	currentVarName=psystem->getCurrentVarName();
 	valoresScale=psystem->getValuesScale();
+
+	printf("legend refreshed:\n");
+	printf("%s\n",currentVarName);
+	printf("valores:(%f,%f,%f,%f)",valoresScale[0],valoresScale[1],valoresScale[2],valoresScale[3]);
+	fflush(stdout);
 }
 
 void showHistogram() {
-	//TODO set color, title, bars, width
+	//TODO set color, set axis names, set title
 	float widthBar = psystem->width_histogram;
 	int boxwidth = (int) (widthBar * 0.9);
 	gp << "set boxwidth " << boxwidth << "\n";
 	gp << "set style fill solid 0.5\n";
 	gp << "set xlabel \"x\"\n";
 	gp << "set ylabel \"Frequency\"\n";
-	gp << "plot \"histog.dat\" using 1:2 smooth freq w boxes lc rgb\"green\" notitle\n";
+	gp << "plot \"histog.dat\" using 1:2:3 w boxes lc rgb variable notitle\n";
 	gp.flush();
 }
 
@@ -427,7 +432,7 @@ void paintColorBoxScale(const char *nameVar, float** colors,float* values,int le
 		//glColor3f(0,0,0);
 
 		testing=(char*)calloc(20,sizeof(char));
-		snprintf(testing,20,"%.1f",values[var]);
+		snprintf(testing,20,"%.2f",values[var]);
 		len = (int) strlen(testing)*8;
 		glPrint(width - gradWidth-len, posY+10,testing,m_font);
 		//glPrint(width - gradWidth, posY+10,testing,m_font);
@@ -636,6 +641,7 @@ void reshape(int w, int h) {
 void mouse(int button, int state, int x, int y) {
 	int mods;
 
+	printf("button: %d\n\n",button);
 	if (state == GLUT_DOWN) {
 		buttonState |= 1 << button;
 	} else if (state == GLUT_UP) {
@@ -652,6 +658,7 @@ void mouse(int button, int state, int x, int y) {
 		buttonState = 3;
 	}
 
+	printf("button state: %d\n\n",buttonState);
 	ox = x;
 	oy = y;
 
@@ -1097,7 +1104,6 @@ int main(int argc, char **argv) {
 
 		printf("datafile: %s\n", pth);
 		fflush(stdout);
-		cin.get();
 		initSimulationSystem(gridSize, true, pth);
 	} else
 		initSimulationSystem(gridSize, true, DATAFILE_PATH);

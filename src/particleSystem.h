@@ -16,8 +16,9 @@
 #define DO_TIMING 0
 
 #include <helper_functions.h>
-#include "particles_kernel.cuh"
+//#include "particles_kernel.cuh"
 #include "vector_functions.h"
+#include <iomanip>
 
 //custom
 #include "ModelOBJ.h"
@@ -222,6 +223,7 @@ public:
 	void colorTemperature(int t, float* r);
 	void colorVariable(int t, float* r);
 	int colorVar(int t, float* r);/* return range*/
+	char* getColor(float valor);
 	void setFileSource(string filePath);
 	void update(float deltaTime);
 	void initDefaultData();
@@ -290,8 +292,7 @@ public:
 
 protected:
 	// methods
-	ParticleSystem() {
-	}
+	ParticleSystem();
 	uint createVBO(uint size);
 
 	void _initialize(int numParticles);
@@ -310,7 +311,6 @@ protected:
 
 	// GPU data
 	float *m_dPos;
-	//float *m_dVel;
 
 	float *m_dSortedPos;
 	float *m_dSortedVel;

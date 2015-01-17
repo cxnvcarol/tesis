@@ -25,37 +25,4 @@ extern "C"
     void *mapGLBufferObject(struct cudaGraphicsResource **cuda_vbo_resource);
     void unmapGLBufferObject(struct cudaGraphicsResource *cuda_vbo_resource);
 
-
-    void integrateSystem(float *pos,
-                         float *vel,
-                         float deltaTime,
-                         uint numParticles);
-
-    void calcHash(uint  *gridParticleHash,
-                  uint  *gridParticleIndex,
-                  float *pos,
-                  int    numParticles);
-
-    void reorderDataAndFindCellStart(uint  *cellStart,
-                                     uint  *cellEnd,
-                                     float *sortedPos,
-                                     float *sortedVel,
-                                     uint  *gridParticleHash,
-                                     uint  *gridParticleIndex,
-                                     float *oldPos,
-                                     float *oldVel,
-                                     uint   numParticles,
-                                     uint   numCells);
-
-    void collide(float *newVel,
-                 float *sortedPos,
-                 float *sortedVel,
-                 uint  *gridParticleIndex,
-                 uint  *cellStart,
-                 uint  *cellEnd,
-                 uint   numParticles,
-                 uint   numCells);
-
-    void sortParticles(uint *dGridParticleHash, uint *dGridParticleIndex, uint numParticles);
-
 }

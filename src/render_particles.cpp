@@ -28,6 +28,7 @@ ParticleRenderer::ParticleRenderer()
       m_pointSize(1.0f),
       m_particleRadius(0.125f * 0.5f),
       m_program(0),
+      m_program_flat(0),
       m_programVectorial(0),
       m_vbo(0),
       m_colorVBO(0),
@@ -142,6 +143,24 @@ void ParticleRenderer::display(DisplayMode mode /* = PARTICLE_POINTS */)
             glUseProgram(0);
             glDisable(GL_POINT_SPRITE_ARB);
             break;
+        case PARTICLE_FLAT_SPHERES:
+			glEnable(GL_POINT_SPRITE_ARB);
+			glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
+			glEnable(GL_VERTEX_PROGRAM_POINT_SIZE_NV);
+			glDepthMask(GL_TRUE);
+			glEnable(GL_DEPTH_TEST);
+			glEnable(GL_ALPHA_TEST);
+
+			glUseProgram(m_program_flat);
+			glUniform1f(glGetUniformLocation(m_program_flat, "pointScale"), m_window_h / tanf(m_fov*0.5f*(float)M_PI/180.0f));
+			glUniform1f(glGetUniformLocation(m_program_flat, "pointRadius"), m_particleRadius);
+
+			glColor3f(1, 1, 1);
+			_drawPoints();
+
+			glUseProgram(0);
+			glDisable(GL_POINT_SPRITE_ARB);
+			break;
         case PARTICLE_ARROWS:
         	glEnable(GL_POINT_SPRITE_ARB);
         	            glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
@@ -214,6 +233,7 @@ ParticleRenderer::_compileProgram(const char *vsource, const char *fsource, cons
 void ParticleRenderer::_initGL()
 {
     m_program = _compileProgram(vertexShader, spherePixelShader,NULL);
+    m_program_flat = _compileProgram(vertexShader, sphereFlatPixelShader,NULL);
     m_programVectorial = _compileProgram(vertexArrowShader, fragmentArrowShader,geometryArrowShader);
 
 #if !defined(__APPLE__) && !defined(MACOSX)

@@ -34,7 +34,7 @@
 #include "thrust/iterator/zip_iterator.h"
 #include "thrust/sort.h"
 
-#include "particles_kernel_impl.cuh"
+//#include "particles_kernel_impl.cuh"
 
 extern "C"
 {
@@ -121,25 +121,5 @@ extern "C"
         }
     }
 
-
-    //Round a / b to nearest higher integer value
-    uint iDivUp(uint a, uint b)
-    {
-        return (a % b != 0) ? (a / b + 1) : (a / b);
-    }
-
-    // compute grid and thread block size for a given number of elements
-    void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
-    {
-        numThreads = min(blockSize, n);
-        numBlocks = iDivUp(n, numThreads);
-    }
-
-    void sortParticles(uint *dGridParticleHash, uint *dGridParticleIndex, uint numParticles)
-    {
-        thrust::sort_by_key(thrust::device_ptr<uint>(dGridParticleHash),
-                            thrust::device_ptr<uint>(dGridParticleHash + numParticles),
-                            thrust::device_ptr<uint>(dGridParticleIndex));
-    }
 
 }   // extern "C"

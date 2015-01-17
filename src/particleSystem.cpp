@@ -11,7 +11,6 @@
 
 #include "particleSystem.h"
 #include "particleSystem.cuh"
-#include "particles_kernel.cuh"
 
 #include <cuda_runtime.h>
 
@@ -286,17 +285,133 @@ int ParticleSystem::colorVar(int index, float *r) {
 	return range;
 }
 
-void colorRamp(float t, float *r) {
-	const int ncolors = 7;
-	float c[ncolors][3] = { { 1.0, 0.0, 0.0, }, { 1.0, 0.5, 0.0, }, { 1.0, 1.0,
-			0.0, }, { 0.0, 1.0, 0.0, }, { 0.0, 1.0, 1.0, }, { 0.0, 0.0, 1.0, },
-			{ 1.0, 0.0, 1.0, }, };
-	t = t * (ncolors - 1);
-	int i = (int) t;
-	float u = t - floor(t);
-	r[0] = lerp(c[i][0], c[i + 1][0], u);
-	r[1] = lerp(c[i][1], c[i + 1][1], u);
-	r[2] = lerp(c[i][2], c[i + 1][2], u);
+char* ParticleSystem::getColor(float valor) {
+
+	//if(colorRangeMode==COLOR_GRADIENT)//{do this... } else {.. too (for now)} //TODO!
+	float *cini;// = gradientInitialColor;
+	float *cfin;// = gradientFinalColor;
+
+
+	float* r=(float*)calloc(3,sizeof(float));
+
+	float varNorm = 0; //in [0,1]
+	int range=1;
+
+	switch (currentVariable) {
+	case VAR_TEMPERATURE:
+		if(valor>=n_tmin&&valor<=n_tmax)
+			{
+			varNorm = (valor - n_tmin) / (n_tmax - n_tmin);
+			range=1;
+			}
+		else if(valor<n_tmin)
+			{
+			varNorm = (valor - tmin) / (n_tmin - tmin);
+			range=0;
+			}
+		else if(valor>n_tmax)
+			{
+			varNorm = (valor - n_tmax) / (tmax - n_tmax);
+			range=2;
+			}
+		break;
+	case VAR_PRESSURE:
+		//varNorm = (valor - pmin) / (pmax - pmin);
+		if(valor>=n_pmin&&valor<=n_pmax)
+		{
+			varNorm = (valor - n_pmin) / (n_pmax - n_pmin);
+			range=1;
+		}
+		else if(valor<n_pmin)
+		{
+			varNorm = (valor - pmin) / (n_pmin - pmin);
+			range=0;
+		}
+		else if(valor>n_pmax)
+		{
+			varNorm = (valor - n_pmax) / (pmax - n_pmax);
+			range=2;
+		}
+
+		break;
+	case VAR_VELOCITY:
+		//varNorm=valor/vmax;
+		if(valor>=n_vmin&&valor<=n_vmax)
+		{
+			varNorm = (valor - n_vmin) / (n_vmax - n_vmin);
+			range=1;
+		}
+		else if(valor<n_vmin)
+		{
+			varNorm = (valor - vmin) / (n_vmin - vmin);
+			range=0;
+		}
+		else if(valor>n_pmax)
+		{
+			varNorm = (valor - n_vmax) / (vmax - n_vmax);
+			range=2;
+		}
+	}
+
+	switch(range)
+	{
+	case 0:
+		cini=lowColor;
+		cfin=gradientInitialColor;
+		break;
+	case 1:
+		cini=gradientInitialColor;
+		cfin=gradientFinalColor;
+		break;
+	case 2:
+		cini=gradientFinalColor;
+		cfin=highColor;
+		break;
+	}
+
+	float difr = cfin[0] - cini[0];
+	float difg = cfin[1] - cini[1];
+	float difb = cfin[2] - cini[2];
+
+	float varPrima = varNorm;
+	float colorMin = cini[0];
+	if (difr < 0) {
+		difr = -difr;
+		varPrima = 1 - varPrima;
+		colorMin = cfin[0];
+	}
+	r[0] = varPrima * difr + colorMin;
+	varPrima = varNorm;
+	colorMin = cini[1];
+	if (difg < 0) {
+		difg = -difg;
+		varPrima = 1 - varPrima;
+		colorMin = cfin[1];
+	}
+	r[1] = varPrima * difg + colorMin;
+
+	varPrima = varNorm;
+	colorMin = cini[2];
+	if (difr < 0) {
+		difb = -difb;
+		varPrima = 1 - varPrima;
+		colorMin = cfin[2];
+	}
+	r[2] = varPrima * difb + colorMin;
+
+	int red=int(r[0]*255),green=int(r[1]*255),blue=int(r[2]*255);
+	printf("getcolor:%d,%d,%d...",red,green,blue);
+
+	std::stringstream stream;
+	stream << "0x";
+	stream << std::setfill ('0') << std::setw(2)
+			<< std::hex << red;
+	stream << std::setfill ('0') << std::setw(2)
+				<< std::hex << green;
+	stream << std::setfill ('0') << std::setw(2)
+				<< std::hex << blue;
+
+	return &stream.str()[0];
 }
 
 void ParticleSystem::_initialize(int numParticles) {
@@ -368,10 +483,7 @@ void ParticleSystem::initialSimulationColor() {
 	for (uint i = 0; i < m_numParticles; i++) {
 		float t = i / (float) m_numParticles;
 
-		if (m_numParticles > 1)
-			colorVar(i, ptr);	//colorVariable(i, ptr);
-		else
-			colorRamp(t, ptr);		//here is the color initialization
+		colorVar(i, ptr);	//colorVariable(i, ptr);
 		ptr += 3;
 
 		*ptr++ = alpha;
@@ -924,7 +1036,7 @@ void ParticleSystem::reset(ParticleConfig config) {
 	switch (config) {
 	default:
 	case CONFIG_SIMULATION_DATA: {
-		int p = 0, v = 0;
+		int p = 0;
 		printf("xmall: %f, ymall: %f, zmall: %f", xMaxAllowed, yMaxAllowed,
 				zMaxAllowed);
 		fflush(stdout);
@@ -974,22 +1086,12 @@ void ParticleSystem::reset(ParticleConfig config) {
 					float diry=velArray[i].direction[1];
 					float dirz=velArray[i].direction[2];
 					//TODO Afinar factor
-					float scaleFactor=particleRadius*20/vmax;//TODO test this number
-					if(velArray[i].magnitude>=vmax*0.9)
-					{
-						point2[0]=point[0]+dirx*scaleFactor;
-						point2[1]=point[1]+dirx*scaleFactor;
-						point2[2]=point[2]+dirx*scaleFactor;
-					}
+					float scaleFactor=particleRadius*20/vmax;
 
-					else{
-						point2[0]=point[0];
-						point2[1]=point[1];
-						point2[2]=point[2];
-						point2[0]=point[0]+dirx*scaleFactor;
-						point2[1]=point[1]+dirx*scaleFactor;
-						point2[2]=point[2]+dirx*scaleFactor;
-					}
+					point2[0]=point[0]+dirx*scaleFactor;
+					point2[1]=point[1]+diry*scaleFactor;
+					point2[2]=point[2]+dirz*scaleFactor;
+
 				}
 				m_hPos[p++] = point[0];
 				m_hPos[p++] = point[1];
@@ -1145,11 +1247,14 @@ void ParticleSystem::generateHistogram() {
 	printf("minLocal:%f, maxLocal:%f\n\n", minLocalVar, maxLocalVar);
 
 	FILE * myfile = fopen("histog.dat", "w");
-
+   char * colorStr;
 	int totalHist = 0;
 	for (int var = 0; var < m_numberHistogramIntervals; ++var) {
 		totalHist += m_histogram[var];
-		fprintf(myfile, "%f %d\n", minLocalVar + var * width_histogram,m_histogram[var]);
+		colorStr=getColor(minLocalVar + var * width_histogram);
+
+		printf("%s:%f\n",colorStr,minLocalVar + var * width_histogram);
+		fprintf(myfile, "%f %d %s\n", minLocalVar + var * width_histogram,m_histogram[var],colorStr);
 	}
 	printf("\n\ntotal cuenta: %d", totalHist);
 	fclose(myfile);

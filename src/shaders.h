@@ -11,6 +11,7 @@
 
 extern const char *vertexShader;
 extern const char *spherePixelShader;
+extern const char *sphereFlatPixelShader;
 extern const char *geometryArrowShader;
 extern const char *vertexArrowShader;
 extern const char *fragmentArrowShader;
